@@ -1,0 +1,45 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd ">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.composum.sling.platform</groupId>
+		<artifactId>composum-sling-platform</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+	</parent>
+
+	<groupId>com.composum.platform</groupId>
+    <artifactId>composum-platform-auth</artifactId>
+	<version>1.0.0-SNAPSHOT</version>
+	<packaging>pom</packaging>
+
+    <name>Composum Platform Auth</name>
+    <description>Maven parent for Composum Platform Auth services</description>
+
+	<modules>
+		<module>bundle</module>
+		<module>setup</module>
+		<module>package</module>
+	</modules>
+
+	<dependencyManagement>
+		<dependencies>
+
+			<!-- Composum Platform -->
+			<dependency>
+				<groupId>com.composum.sling.platform</groupId>
+				<artifactId>composum-sling-platform-security-bundle</artifactId>
+				<version>1.0.0-SNAPSHOT</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.composum.sling.platform</groupId>
+				<artifactId>composum-sling-platform-commons-bundle</artifactId>
+				<version>1.0.0-SNAPSHOT</version>
+				<scope>provided</scope>
+			</dependency>
+
+		</dependencies>
+	</dependencyManagement>
+
+</project>
