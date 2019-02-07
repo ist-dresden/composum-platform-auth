@@ -46,10 +46,7 @@
                             javax.annotation.*;version="[0,4)",
                             *
                         </Import-Package>
-                        <!-- <Embed-Dependency>
-                            *;scope=compile|runtime
-                        </Embed-Dependency>
-                        <Embed-Dependency>keycloak*,bcp*,jboss*,slf4j-jboss*,woodstox*,stax*</Embed-Dependency> -->
+                        <Embed-Dependency>keycloak*</Embed-Dependency>
                     </instructions>
                 </configuration>
             </plugin>
@@ -173,6 +170,55 @@
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>jsr305</artifactId>
         </dependency>
+
+        <!-- security -->
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-adapter-spi</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-servlet-adapter-spi</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-saml-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-saml-core-public</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-saml-adapter-api-public</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-saml-adapter-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-saml-servlet-filter-adapter</artifactId>
+        </dependency>
+        <!-- TODO: really needed? -->
+        <!--<dependency>-->
+        <!--<groupId>org.keycloak</groupId>-->
+        <!--<artifactId>keycloak-authz-client</artifactId>-->
+        <!--</dependency>-->
+        <!-- TODO: really needed? -->
+        <!--<dependency>-->
+        <!--<groupId>org.keycloak</groupId>-->
+        <!--<artifactId>keycloak-core</artifactId>-->
+        <!--</dependency>-->
+        <!-- TODO: really needed? -->
+        <!--<dependency>-->
+        <!--<groupId>org.keycloak</groupId>-->
+        <!--<artifactId>keycloak-adapter-core</artifactId>-->
+        <!--</dependency>-->
 
         <!-- JUnit -->
         <dependency>

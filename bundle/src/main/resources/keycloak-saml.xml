@@ -1,0 +1,34 @@
+<keycloak-saml-adapter xmlns="urn:keycloak:saml:adapter"
+                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                       xsi:schemaLocation="urn:keycloak:saml:adapter https://www.keycloak.org/schema/keycloak_saml_adapter_1_9.xsd">
+    <!-- FIXME hps Setting that probably need to be changed in the end
+        compare https://www.keycloak.org/docs/latest/securing_apps/index.html#saml-2 :
+        sslPolicy , turnOffChangeSessionIdOnLogin , element Keys, signaturesRequired .
+
+        Changes in comparison to download
+        https://auth.ist-software.com/auth/admin/master/console/#/realms/composum-demo/clients/f927bc02-72fa-4a6e-9c27-1d29141e47f8/installation
+        sslPolicy, turnOffChangeSessionIdOnLogin, autodetectBearerOnly, PrincipalNameMapping -->
+
+    <SP entityID="localhost9090"
+        sslPolicy="NONE"
+        turnOffChangeSessionIdOnLogin="true"
+        autodetectBearerOnly="true"
+        logoutPage="/system/sling/logout">
+        <PrincipalNameMapping policy="FROM_ATTRIBUTE" attribute="email"/>
+        <IDP entityID="idp">
+            <SingleSignOnService signRequest="false"
+                                 validateResponseSignature="false"
+                                 validateAssertionSignature="false"
+                                 requestBinding="POST"
+                                 bindingUrl="https://auth.ist-software.com/auth/realms/composum-demo/protocol/saml"/>
+            <SingleLogoutService signRequest="false"
+                                 signResponse="false"
+                                 validateRequestSignature="false"
+                                 validateResponseSignature="false"
+                                 requestBinding="POST"
+                                 responseBinding="POST"
+                                 postBindingUrl="https://auth.ist-software.com/auth/realms/composum-demo/protocol/saml"
+                                 redirectBindingUrl="https://auth.ist-software.com/auth/realms/composum-demo/protocol/saml"/>
+        </IDP>
+    </SP>
+</keycloak-saml-adapter>

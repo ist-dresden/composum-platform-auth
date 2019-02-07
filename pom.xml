@@ -6,6 +6,7 @@
 		<groupId>com.composum.sling.platform</groupId>
 		<artifactId>composum-sling-platform</artifactId>
 		<version>1.0.0-SNAPSHOT</version>
+		<relativePath>../platform</relativePath>
 	</parent>
 
 	<groupId>com.composum.platform</groupId>
@@ -51,6 +52,13 @@
 
 	<dependencyManagement>
 		<dependencies>
+
+			<!-- sling -->
+			<dependency>
+				<groupId>org.apache.sling</groupId>
+				<artifactId>org.apache.sling.auth.core</artifactId>
+				<version>1.4.2</version>
+			</dependency>
 
 			<!-- Composum Platform -->
 			<dependency>
@@ -167,30 +175,6 @@
 				<groupId>org.apache.santuario</groupId>
 				<artifactId>xmlsec</artifactId>
 				<version>2.1.2</version>
-			</dependency>
-			<dependency>
-				<!-- https://mvnrepository.com/artifact/com.fasterxml.woodstox/woodstox-core -->
-				<groupId>com.fasterxml.woodstox</groupId>
-				<artifactId>woodstox-core</artifactId>
-				<version>5.2.0</version>
-			</dependency>
-			<dependency>
-				<!-- https://mvnrepository.com/artifact/org.codehaus.woodstox/stax2-api -->
-				<groupId>org.codehaus.woodstox</groupId>
-				<artifactId>stax2-api</artifactId>
-				<version>4.1</version>
-			</dependency>
-			<dependency>
-				<!-- https://mvnrepository.com/artifact/org.jboss.logmanager/jboss-logmanager -->
-				<groupId>org.jboss.logmanager</groupId>
-				<artifactId>jboss-logmanager</artifactId>
-				<version>2.1.5.Final</version>
-			</dependency>
-			<dependency>
-				<!-- https://mvnrepository.com/artifact/org.jboss.slf4j/slf4j-jboss-logmanager -->
-				<groupId>org.jboss.slf4j</groupId>
-				<artifactId>slf4j-jboss-logmanager</artifactId>
-				<version>1.0.4.GA</version>
 			</dependency>
 
 		</dependencies>
