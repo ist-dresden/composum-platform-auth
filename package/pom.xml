@@ -92,11 +92,6 @@
 
                     <embeddeds>
                         <embedded>
-                            <groupId>org.apache.sling</groupId>
-                            <artifactId>org.apache.sling.auth</artifactId>
-                            <target>/libs/composum/platform/install</target>
-                        </embedded>
-                        <embedded>
                             <groupId>${project.groupId}</groupId>
                             <artifactId>composum-platform-auth-bundle</artifactId>
                             <target>/libs/composum/platform/install</target>

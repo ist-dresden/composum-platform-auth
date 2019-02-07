@@ -46,9 +46,10 @@
                             javax.annotation.*;version="[0,4)",
                             *
                         </Import-Package>
-                        <Embed-Dependency>
+                        <!-- <Embed-Dependency>
                             *;scope=compile|runtime
                         </Embed-Dependency>
+                        <Embed-Dependency>keycloak*,bcp*,jboss*,slf4j-jboss*,woodstox*,stax*</Embed-Dependency> -->
                     </instructions>
                 </configuration>
             </plugin>
