@@ -11,7 +11,7 @@
 
     <SP entityID="localhost9090"
         sslPolicy="NONE"
-        turnOffChangeSessionIdOnLogin="true"
+        turnOffChangeSessionIdOnLogin="false"
         autodetectBearerOnly="true"
         logoutPage="/system/sling/logout">
         <PrincipalNameMapping policy="FROM_ATTRIBUTE" attribute="email"/>

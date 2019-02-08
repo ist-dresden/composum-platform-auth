@@ -27,7 +27,6 @@ public class SlingSamlConfigResolver implements SamlConfigResolver {
         if (is == null) {
             throw new IllegalStateException("Not able to find the file /keycloak-saml.xml");
         }
-        LOG.info("Found {}", KEYCLOAK_SAML_XML);
 
         try {
             ResourceLoader loader = new ResourceLoader() {
