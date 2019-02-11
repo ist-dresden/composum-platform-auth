@@ -24,6 +24,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
+import java.security.Principal;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -32,7 +33,7 @@ import java.util.Collections;
         description = "a servlet filter to provide authentication with keycloak",
         scope = {SlingFilterScope.REQUEST},
         order = 9000,
-        pattern = "/content/ist/composum.*|/saml.*",
+        pattern = "/content/test/composum/authtest.*|/saml.*",
         metatype = false)
 public class KeycloakAuthenticationFilter extends SamlFilter implements Filter {
 
@@ -53,17 +54,22 @@ public class KeycloakAuthenticationFilter extends SamlFilter implements Filter {
         debug(request);
         try {
             super.doFilter(req, res, chain);
-        } catch (Exception e) {
+        } catch (Exception e) { // TODO only logout if the error was in the SamlFilter, not in the chain.
             LOG.error("error in doFilter", e);
             HttpSession session = ((HttpServletRequest) req).getSession();
             idMapper.removeSession(session.getId());
             session.invalidate();
+            request.logout();
         }
         LOG.info("<< doFilter");
     }
 
     private void debug(HttpServletRequest request) {
         try {
+            Principal userPrincipal = request.getUserPrincipal();
+            if (null != userPrincipal) {
+                LOG.info("UserPrincipal: {}", ToStringBuilder.reflectionToString(userPrincipal, ToStringStyle.MULTI_LINE_STYLE, true));
+            }
             HttpSession session = request.getSession(false);
             if (session != null) {
                 for (String name : Collections.list(session.getAttributeNames())) {
