@@ -1,5 +1,8 @@
 package com.composum.sling.platform.keycloak;
 
+import org.apache.sling.auth.core.spi.AuthenticationFeedbackHandler;
+import org.apache.sling.auth.core.spi.AuthenticationHandler;
+import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

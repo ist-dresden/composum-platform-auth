@@ -28,6 +28,9 @@ import java.security.Principal;
 import java.util.Collection;
 import java.util.Collections;
 
+/**
+ * Deploys the keycloak {@link SamlFilter} into the Sling environment.
+ */
 @SlingFilter(
         label = "Composum Platform Authentication Filter",
         description = "a servlet filter to provide authentication with keycloak",
@@ -52,16 +55,53 @@ public class KeycloakAuthenticationFilter extends SamlFilter implements Filter {
         HttpServletRequest request = (HttpServletRequest) req;
         HttpServletResponse response = (HttpServletResponse) res;
         debug(request);
+        ExceptionSavingFilterChain chainWrapper = new ExceptionSavingFilterChain(chain);
         try {
-            super.doFilter(req, res, chain);
-        } catch (Exception e) { // TODO only logout if the error was in the SamlFilter, not in the chain.
-            LOG.error("error in doFilter", e);
-            HttpSession session = ((HttpServletRequest) req).getSession();
-            idMapper.removeSession(session.getId());
-            session.invalidate();
-            request.logout();
+            super.doFilter(req, res, chainWrapper);
+        } catch (IOException | ServletException | RuntimeException e) {
+            if (chainWrapper.getException() == null) {
+                // some exception in SamlFilter, not the chain. -> Logout.
+                LOG.error("error in doFilter", e);
+                HttpSession session = ((HttpServletRequest) req).getSession(false);
+                if (session != null) {
+                    idMapper.removeSession(session.getId());
+                    session.invalidate();
+                }
+                request.logout();
+            }
+            throw e;
         }
         LOG.info("<< doFilter");
+    }
+
+    /**
+     * Saves exceptions occuring in the wrapped chain.
+     */
+    protected static class ExceptionSavingFilterChain implements FilterChain {
+
+        private final FilterChain wrappedChain;
+        private Exception exception;
+
+        public ExceptionSavingFilterChain(FilterChain wrappedChain) {
+            this.wrappedChain = wrappedChain;
+        }
+
+        @Override
+        public void doFilter(ServletRequest request, ServletResponse response) throws IOException, ServletException {
+            try {
+                wrappedChain.doFilter(request, response);
+            } catch (IOException | ServletException | RuntimeException e) {
+                this.exception = e;
+                throw e;
+            }
+        }
+
+        /**
+         * The exception that occured during execution of {@link #doFilter(ServletRequest, ServletResponse)}.
+         */
+        public Exception getException() {
+            return exception;
+        }
     }
 
     private void debug(HttpServletRequest request) {
@@ -75,7 +115,7 @@ public class KeycloakAuthenticationFilter extends SamlFilter implements Filter {
                 for (String name : Collections.list(session.getAttributeNames())) {
                     LOG.info("Attr {} = {}", name, session.getAttribute(name));
                 }
-                SamlSession samlSession = (SamlSession) session.getAttribute(SamlSession.class.getName());
+                SamlSession samlSession = KeycloakAuthenticationHandler.getAccount(request);
                 LOG.info("SamlSession: {}", ToStringBuilder.reflectionToString(samlSession, ToStringStyle.DEFAULT_STYLE, true));
                 LOG.info("Principal: {}", ToStringBuilder.reflectionToString(samlSession.getPrincipal(), ToStringStyle.DEFAULT_STYLE, true));
                 LOG.info("Assertion: {}", ToStringBuilder.reflectionToString(samlSession.getPrincipal().getAssertion(), ToStringStyle.DEFAULT_STYLE, true));

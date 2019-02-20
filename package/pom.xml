@@ -89,6 +89,9 @@
                             <includes>
                                 <include>.*/org.apache.sling.auth.*\.jar</include>
                                 <include>.*/composum-platform-auth-bundle.*\.jar</include>
+                                <include>.*/bcp.*\.jar</include>
+                                <include>.*/xmlsec.*\.jar</include>
+                                <include>.*/jboss-logging.*\.jar</include>
                             </includes>
                         </filter>
                     </filters>
