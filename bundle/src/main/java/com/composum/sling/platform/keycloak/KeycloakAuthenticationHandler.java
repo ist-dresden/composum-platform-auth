@@ -73,12 +73,15 @@ public class KeycloakAuthenticationHandler extends DefaultAuthenticationFeedback
     @Override
     public AuthenticationInfo extractCredentials(HttpServletRequest request, HttpServletResponse response) {
         LOG.info("extractCredentials");
-        debug(request);
         AuthenticationInfo result = null;
         SamlSession samlSession = getAccount(request);
         if (samlSession != null) {
-            result = new AuthenticationInfo(KEYCLOAK_AUTH, samlSession.getPrincipal().getSamlSubject());
-            result.put(JcrResourceConstants.AUTHENTICATION_INFO_CREDENTIALS, samlSession);
+            LOG.info("Found SamlSession");
+            debug(request);
+            KeycloakCredentials credentials = new KeycloakCredentials(samlSession);
+            LOG.info("Credentials created: {}", credentials);
+            result = new AuthenticationInfo(KEYCLOAK_AUTH, credentials.getUserId());
+            result.put(JcrResourceConstants.AUTHENTICATION_INFO_CREDENTIALS, credentials);
         }
         return result;
     }
