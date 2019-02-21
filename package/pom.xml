@@ -92,6 +92,9 @@
                                 <include>.*/bcp.*\.jar</include>
                                 <include>.*/xmlsec.*\.jar</include>
                                 <include>.*/jboss-logging.*\.jar</include>
+                                <include>
+                                    .*/org.apache.sling.serviceusermapping.impl.ServiceUserMapperImpl.amended-platformauth.config
+                                </include>
                             </includes>
                         </filter>
                     </filters>

@@ -19,6 +19,7 @@ import javax.annotation.Nonnull;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import java.security.Principal;
+import java.util.Locale;
 
 /**
  * Default implementation of {@link KeycloakSynchronizationService}.
@@ -26,6 +27,8 @@ import java.security.Principal;
 @Component(service = KeycloakSynchronizationService.class, immediate = true)
 @Designate(ocd = KeycloakSynchronizationServiceImpl.Configuration.class)
 public class KeycloakSynchronizationServiceImpl implements KeycloakSynchronizationService {
+
+    public static final String PLATFORM_SERVICE_USER = "composum-platform-service";
 
     private static final Logger LOG = LoggerFactory.getLogger(KeycloakSynchronizationServiceImpl.class);
 
@@ -56,18 +59,22 @@ public class KeycloakSynchronizationServiceImpl implements KeycloakSynchronizati
 
     @Override
     public Authorizable createOrUpdateUser(@Nonnull KeycloakCredentials credentials) throws RepositoryException, LoginException, PersistenceException {
-        // TODO use service user
+        // try (ResourceResolver adminResolver = resolverFactory.getServiceResourceResolver(null)) { // FIXME How to do this?
         try (ResourceResolver adminResolver = resolverFactory.getAdministrativeResourceResolver(null)) {
             JackrabbitSession session = (JackrabbitSession) adminResolver.adaptTo(Session.class);
             UserManager userManager = session.getUserManager();
-            Authorizable user = userManager.getAuthorizable(credentials.getUserId());
+            String userId = credentials.getUserId();
+            Authorizable user = userManager.getAuthorizable(userId);
             if (user == null) {
                 Principal principal = credentials.getSamlSession().getPrincipal();
-                user = userManager.createUser(credentials.getUserId(), credentials.getPseudoPassword(), principal, config.userpath());
+                String userpath = config.userpath();
+                if (userId.contains("@"))
+                    userpath = userpath + "/" + userId.substring(userId.indexOf("@") + 1).toLowerCase(Locale.ROOT);
+                user = userManager.createUser(userId, credentials.getPseudoPassword(), principal, userpath);
                 adminResolver.commit();
                 LOG.info("User created: {}", user);
             } else {
-                LOG.info("User exists for {}", credentials.getUserId());
+                LOG.info("User exists for {}", userId);
                 // TODO
             }
             return user;
