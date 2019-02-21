@@ -9,7 +9,6 @@ class SlingSamlConfigResolverTest {
 
     @org.junit.jupiter.api.Test
     void resolve() {
-        org.apache.http.conn.ssl.X509HostnameVerifier.class.getName();
         SamlDeployment deployment = new SlingSamlConfigResolver().resolve(null);
         assertNotNull(deployment);
         // this is a changed property, so if that's true we have actually read the config file

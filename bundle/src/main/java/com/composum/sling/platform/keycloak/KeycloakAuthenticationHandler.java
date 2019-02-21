@@ -1,7 +1,7 @@
 package com.composum.sling.platform.keycloak;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
+import org.apache.sling.api.resource.LoginException;
+import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.auth.core.spi.AuthenticationFeedbackHandler;
 import org.apache.sling.auth.core.spi.AuthenticationHandler;
 import org.apache.sling.auth.core.spi.AuthenticationInfo;
@@ -12,16 +12,18 @@ import org.keycloak.adapters.saml.SamlSessionStore;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.jcr.RepositoryException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
-import java.security.Principal;
-import java.util.Collections;
+
+import static com.composum.sling.platform.keycloak.KeycloakAuthenticationFilter.debug;
 
 /**
  * Authentication handler that uses Keycloak to perform authentication for us, which is handling the the nitty gritty details of login via various providers for us. We use SAML to interface Keycloak, since that seems simpler to include than using OpenID.
@@ -47,6 +49,9 @@ public class KeycloakAuthenticationHandler extends DefaultAuthenticationFeedback
     public static final String ATTR_SAMLSESSION = SamlSession.class.getName();
 
     private ComponentContext context;
+
+    @Reference
+    private KeycloakSynchronizationService keycloakSynchronizationService;
 
     @Activate
     private void activate(final ComponentContext context) {
@@ -79,9 +84,14 @@ public class KeycloakAuthenticationHandler extends DefaultAuthenticationFeedback
             LOG.info("Found SamlSession");
             debug(request);
             KeycloakCredentials credentials = new KeycloakCredentials(samlSession);
-            LOG.info("Credentials created: {}", credentials);
-            result = new AuthenticationInfo(KEYCLOAK_AUTH, credentials.getUserId());
-            result.put(JcrResourceConstants.AUTHENTICATION_INFO_CREDENTIALS, credentials);
+            try {
+                keycloakSynchronizationService.createOrUpdateUser(credentials);
+                LOG.info("Credentials created: {}", credentials);
+                result = new AuthenticationInfo(KEYCLOAK_AUTH, credentials.getUserId());
+                result.put(JcrResourceConstants.AUTHENTICATION_INFO_CREDENTIALS, credentials);
+            } catch (RepositoryException | LoginException | PersistenceException e) {
+                LOG.error("Trouble creating/getting user " + credentials.getUserId(), e);
+            }
         }
         return result;
     }
@@ -106,24 +116,5 @@ public class KeycloakAuthenticationHandler extends DefaultAuthenticationFeedback
         }
     }
 
-    private void debug(HttpServletRequest request) {
-        try {
-            Principal userPrincipal = request.getUserPrincipal();
-            if (null != userPrincipal) {
-                LOG.info("UserPrincipal: {}", ToStringBuilder.reflectionToString(userPrincipal, ToStringStyle.MULTI_LINE_STYLE, true));
-            }
-            HttpSession session = request.getSession(false);
-            if (session != null) {
-                for (String name : Collections.list(session.getAttributeNames())) {
-                    LOG.info("Attr {} = {}", name, session.getAttribute(name));
-                }
-                SamlSession samlSession = getAccount(request);
-                LOG.info("SamlSession: {}", ToStringBuilder.reflectionToString(samlSession, ToStringStyle.DEFAULT_STYLE, true));
-                LOG.info("Principal: {}", ToStringBuilder.reflectionToString(samlSession.getPrincipal(), ToStringStyle.DEFAULT_STYLE, true));
-                LOG.info("Assertion: {}", ToStringBuilder.reflectionToString(samlSession.getPrincipal().getAssertion(), ToStringStyle.DEFAULT_STYLE, true));
-            }
-        } catch (Exception e) {
-            LOG.error(e.toString());
-        }
-    }
+
 }

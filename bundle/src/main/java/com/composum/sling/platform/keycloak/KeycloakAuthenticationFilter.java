@@ -14,12 +14,7 @@ import org.keycloak.adapters.spi.InMemorySessionIdMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -59,19 +54,23 @@ public class KeycloakAuthenticationFilter extends SamlFilter implements Filter {
         try {
             super.doFilter(req, res, chainWrapper);
         } catch (IOException | ServletException | RuntimeException e) {
-            if (chainWrapper.getException() == null) {
-                // some exception in SamlFilter, not the chain. -> Logout.
+            if (chainWrapper.exception == null) { // some exception in SamlFilter, not the chain. -> Logout.
                 LOG.error("error in doFilter", e);
-                HttpSession session = ((HttpServletRequest) req).getSession(false);
-                if (session != null) {
-                    idMapper.removeSession(session.getId());
-                    session.invalidate();
-                }
-                request.logout();
+                logout(request);
             }
             throw e;
         }
         LOG.info("<< doFilter");
+        debug(request);
+    }
+
+    protected void logout(HttpServletRequest request) throws ServletException {
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            idMapper.removeSession(session.getId());
+            session.invalidate();
+        }
+        request.logout();
     }
 
     /**
@@ -80,7 +79,11 @@ public class KeycloakAuthenticationFilter extends SamlFilter implements Filter {
     protected static class ExceptionSavingFilterChain implements FilterChain {
 
         private final FilterChain wrappedChain;
-        private Exception exception;
+
+        /**
+         * The exception that occured during execution of {@link #doFilter(ServletRequest, ServletResponse)} of wrappedChain.
+         */
+        protected Exception exception;
 
         public ExceptionSavingFilterChain(FilterChain wrappedChain) {
             this.wrappedChain = wrappedChain;
@@ -95,16 +98,9 @@ public class KeycloakAuthenticationFilter extends SamlFilter implements Filter {
                 throw e;
             }
         }
-
-        /**
-         * The exception that occured during execution of {@link #doFilter(ServletRequest, ServletResponse)}.
-         */
-        public Exception getException() {
-            return exception;
-        }
     }
 
-    private void debug(HttpServletRequest request) {
+    static void debug(HttpServletRequest request) {
         try {
             Principal userPrincipal = request.getUserPrincipal();
             if (null != userPrincipal) {
@@ -139,7 +135,7 @@ public class KeycloakAuthenticationFilter extends SamlFilter implements Filter {
                         if (null != array || array.length == 0) super.append(buffer, fieldName, array, fullDetail);
                     }
                 };
-                LOG.info("SamlSession: {}", ToStringBuilder.reflectionToString(samlSession, toStringStyle, true));
+                // LOG.info("SamlSession: {}", ToStringBuilder.reflectionToString(samlSession, toStringStyle, true));
             }
         } catch (Exception e) {
             LOG.error("{}", e);

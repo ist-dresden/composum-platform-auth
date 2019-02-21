@@ -50,6 +50,13 @@ public class KeycloakCredentials implements Credentials {
         return samlSession.getPrincipal().getFriendlyAttribute("email");
     }
 
+    /**
+     * Something we use as password for the user. That's not a real password - rather a fixed internal id.
+     */
+    public String getPseudoPassword() {
+        return samlSession.getPrincipal().getFriendlyAttribute("nameid");
+    }
+
     @Override
     public String toString() {
         ToStringBuilder builder = new ToStringBuilder(this, ToStringStyle.JSON_STYLE)
