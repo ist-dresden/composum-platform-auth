@@ -4,8 +4,10 @@ import org.apache.commons.lang3.builder.MultilineRecursiveToStringStyle;
 import org.apache.commons.lang3.builder.RecursiveToStringStyle;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.sling.SlingFilter;
 import org.apache.felix.scr.annotations.sling.SlingFilterScope;
+import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.keycloak.adapters.saml.SamlConfigResolver;
 import org.keycloak.adapters.saml.SamlDeploymentContext;
 import org.keycloak.adapters.saml.SamlSession;
@@ -38,10 +40,12 @@ public class KeycloakAuthenticationFilter extends SamlFilter implements Filter {
 
     private static final Logger LOG = LoggerFactory.getLogger(KeycloakAuthenticationFilter.class);
 
+    @Reference // TODO why doesn't org.osgi.service.component.annotations.Reference work?
+            SamlConfigResolver samlConfigResolver;
+
     @Override
     public void init(final FilterConfig filterConfig) throws ServletException {
-        SamlConfigResolver configResolver = new SlingSamlConfigResolver();
-        deploymentContext = new SamlDeploymentContext(configResolver);
+        deploymentContext = new SamlDeploymentContext(samlConfigResolver);
         idMapper = new InMemorySessionIdMapper();
     }
 
