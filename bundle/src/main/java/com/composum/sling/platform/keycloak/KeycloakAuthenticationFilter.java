@@ -10,11 +10,13 @@ import org.keycloak.adapters.saml.SamlConfigResolver;
 import org.keycloak.adapters.saml.SamlDeploymentContext;
 import org.keycloak.adapters.saml.SamlSession;
 import org.keycloak.adapters.saml.servlet.SamlFilter;
+import org.keycloak.adapters.servlet.FilterSessionStore;
 import org.keycloak.adapters.spi.InMemorySessionIdMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.*;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -46,19 +48,29 @@ public class KeycloakAuthenticationFilter extends SamlFilter implements Filter {
 
     @Override
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
-        LOG.info(">> doFilter");
         HttpServletRequest request = (HttpServletRequest) req;
         HttpServletResponse response = (HttpServletResponse) res;
+        if ("true".equals(request.getParameter("logout"))) {
+            LOG.info("LOGOUT");
+            request.logout();
+            request.getSession(true).invalidate();
+            response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+            return;
+        }
         debug(request);
-        ExceptionSavingFilterChain chainWrapper = new ExceptionSavingFilterChain(chain);
-        try {
-            super.doFilter(req, res, chainWrapper);
-        } catch (IOException | ServletException | RuntimeException e) {
-            if (chainWrapper.exception == null) { // some exception in SamlFilter, not the chain. -> Logout.
-                LOG.error("error in doFilter", e);
-                logout(request);
+        if (request.getUserPrincipal() == null || "anonymous".equals(request.getRemoteUser())) {
+            ExceptionSavingFilterChain chainWrapper = new ExceptionSavingFilterChain(chain);
+            try {
+                super.doFilter(req, res, chainWrapper);
+            } catch (IOException | ServletException | RuntimeException e) {
+                if (chainWrapper.exception == null) { // some exception in SamlFilter, not the chain. -> Logout.
+                    LOG.error("error in doFilter", e);
+                    logout(request);
+                }
+                throw e;
             }
-            throw e;
+        } else { // user already logged in - do nothing.
+            chain.doFilter(request, response);
         }
         LOG.info("<< doFilter");
         debug(request);
@@ -108,6 +120,7 @@ public class KeycloakAuthenticationFilter extends SamlFilter implements Filter {
             }
             HttpSession session = request.getSession(false);
             if (session != null) {
+                LOG.info("SessionID: {}", session.getId());
                 for (String name : Collections.list(session.getAttributeNames())) {
                     LOG.info("Attr {} = {}", name, session.getAttribute(name));
                 }

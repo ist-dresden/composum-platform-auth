@@ -61,10 +61,11 @@ public class KeycloakAuthenticationHandler extends DefaultAuthenticationFeedback
     public static SamlSession getAccount(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
         if (session == null) return null;
-        if (session.getAttribute(ATTR_SAMLSESSION) instanceof SamlSession) {
-            return (SamlSession) session.getAttribute(ATTR_SAMLSESSION);
+        Object sessionAttribute = session.getAttribute(ATTR_SAMLSESSION);
+        if (sessionAttribute == null || sessionAttribute instanceof SamlSession) {
+            return (SamlSession) sessionAttribute;
         } else {
-            LOG.warn(ATTR_SAMLSESSION + " not instance of SamlSession. Logout.");
+            LOG.error(ATTR_SAMLSESSION + " not instance of SamlSession. Logout.");
             session.invalidate();
             try {
                 request.logout();

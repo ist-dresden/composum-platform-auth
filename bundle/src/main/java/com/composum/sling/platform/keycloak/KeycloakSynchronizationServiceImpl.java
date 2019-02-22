@@ -2,6 +2,7 @@ package com.composum.sling.platform.keycloak;
 
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.user.Authorizable;
+import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.PersistenceException;
@@ -71,6 +72,8 @@ public class KeycloakSynchronizationServiceImpl implements KeycloakSynchronizati
                 if (userId.contains("@"))
                     userpath = userpath + "/" + userId.substring(userId.indexOf("@") + 1).toLowerCase(Locale.ROOT);
                 user = userManager.createUser(userId, credentials.getPseudoPassword(), principal, userpath);
+                Group group = (Group) userManager.getAuthorizable("composum-platform-users");
+                group.addMember(user);
                 adminResolver.commit();
                 LOG.info("User created: {}", user);
             } else {
