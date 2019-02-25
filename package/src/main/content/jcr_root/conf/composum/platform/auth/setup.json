@@ -1,0 +1,26 @@
+[
+  {
+    "path": "/content/test/composum/authtest",
+    "acl": [
+      {
+        "principal": "everyone",
+        "acl": [
+          {
+            "allow": false,
+            "privileges": "jcr:all"
+          }
+        ]
+      },
+      {
+        "principal": "composum-platform-auth-external",
+        "groupPath": "composum/platform",
+        "acl": [
+          {
+            "allow": true,
+            "privileges": "jcr:read"
+          }
+        ]
+      }
+    ]
+  }
+]

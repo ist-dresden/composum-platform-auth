@@ -21,6 +21,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import java.security.Principal;
 import java.util.Locale;
+import java.util.Objects;
 
 /**
  * Default implementation of {@link KeycloakSynchronizationService}.
@@ -29,9 +30,15 @@ import java.util.Locale;
 @Designate(ocd = KeycloakSynchronizationServiceImpl.Configuration.class)
 public class KeycloakSynchronizationServiceImpl implements KeycloakSynchronizationService {
 
+    // TODO actually use this one.
     public static final String PLATFORM_SERVICE_USER = "composum-platform-service";
 
     private static final Logger LOG = LoggerFactory.getLogger(KeycloakSynchronizationServiceImpl.class);
+
+    /**
+     * A default group the newly created users are assigned to, unless overridden by configuration.
+     */
+    public static final String DEFAULT_GROUP = "composum-auth-external";
 
     private Configuration config;
 
@@ -44,6 +51,9 @@ public class KeycloakSynchronizationServiceImpl implements KeycloakSynchronizati
 
         @AttributeDefinition(name = "User path", description = "JCR path below which the users are created")
         String userpath() default "/home/users/keycloak";
+
+        @AttributeDefinition(name = "New user groups", description = "A set of groups a newly synchronized user is assigned to")
+        String[] groups() default {DEFAULT_GROUP};
     }
 
     @Activate
@@ -63,17 +73,19 @@ public class KeycloakSynchronizationServiceImpl implements KeycloakSynchronizati
         // try (ResourceResolver adminResolver = resolverFactory.getServiceResourceResolver(null)) { // FIXME How to do this?
         try (ResourceResolver adminResolver = resolverFactory.getAdministrativeResourceResolver(null)) {
             JackrabbitSession session = (JackrabbitSession) adminResolver.adaptTo(Session.class);
-            UserManager userManager = session.getUserManager();
+            UserManager userManager = Objects.requireNonNull(session.getUserManager());
             String userId = credentials.getUserId();
             Authorizable user = userManager.getAuthorizable(userId);
             if (user == null) {
                 Principal principal = credentials.getSamlSession().getPrincipal();
                 String userpath = config.userpath();
                 if (userId.contains("@"))
-                    userpath = userpath + "/" + userId.substring(userId.indexOf("@") + 1).toLowerCase(Locale.ROOT);
+                    userpath = userpath + "/" + userId.substring(userId.indexOf('@') + 1).toLowerCase(Locale.ROOT);
                 user = userManager.createUser(userId, credentials.getPseudoPassword(), principal, userpath);
-                Group group = (Group) userManager.getAuthorizable("composum-platform-users");
-                group.addMember(user);
+                for (String groupname : config.groups()) {
+                    Group group = (Group) userManager.getAuthorizable(groupname);
+                    group.addMember(user);
+                }
                 adminResolver.commit();
                 LOG.info("User created: {}", user);
             } else {
