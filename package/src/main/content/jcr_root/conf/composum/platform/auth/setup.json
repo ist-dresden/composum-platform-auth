@@ -22,5 +22,40 @@
         ]
       }
     ]
+  },
+  {
+    "path": "/home/users/keycloak",
+    "acl": [
+      {
+        "principal": "composum-platform-auth-service",
+        "acl": [
+          {
+            "allow": true,
+            "privileges": [
+              "jcr:read",
+              "jcr:write"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "/home/groups",
+    "acl": [
+      {
+        "principal": "composum-platform-auth-service",
+        "acl": [
+          {
+            "allow": true,
+            "privileges": [
+              "jcr:read",
+              "jcr:modifyProperties",
+              "jcr:modifyAccessControl"
+            ]
+          }
+        ]
+      }
+    ]
   }
 ]

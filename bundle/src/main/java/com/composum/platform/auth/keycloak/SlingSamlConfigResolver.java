@@ -1,4 +1,4 @@
-package com.composum.sling.platform.keycloak;
+package com.composum.platform.auth.keycloak;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.sling.api.resource.LoginException;

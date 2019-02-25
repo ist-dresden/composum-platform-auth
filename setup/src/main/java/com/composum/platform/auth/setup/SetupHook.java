@@ -2,17 +2,19 @@ package com.composum.platform.auth.setup;
 
 import com.composum.sling.core.service.RepositorySetupService;
 import com.composum.sling.core.setup.util.SetupUtil;
+import org.apache.jackrabbit.api.JackrabbitSession;
+import org.apache.jackrabbit.api.security.user.Authorizable;
+import org.apache.jackrabbit.api.security.user.User;
+import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.jackrabbit.vault.packaging.InstallContext;
 import org.apache.jackrabbit.vault.packaging.InstallHook;
 import org.apache.jackrabbit.vault.packaging.PackageException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import java.io.IOException;
-import java.util.Collections;
 
 import static java.util.Collections.*;
 
@@ -28,9 +30,7 @@ public class SetupHook implements InstallHook {
         switch (ctx.getPhase()) {
             case PREPARE:
                 LOG.info("prepare: execute...");
-                SetupUtil.setupGroupsAndUsers(ctx,
-                        singletonMap("composum/platform/composum-platform-auth-external", emptyList())
-                        , null, null);
+                setupUsers(ctx);
                 LOG.info("prepare: execute ends.");
                 break;
             case INSTALLED:
@@ -38,6 +38,19 @@ public class SetupHook implements InstallHook {
                 setupAcls(ctx);
                 LOG.info("installed: execute ends.");
                 break;
+        }
+    }
+
+    protected void setupUsers(InstallContext ctx) throws PackageException {
+        try {
+            SetupUtil.setupGroupsAndUsers(ctx,
+                    singletonMap("composum/platform/composum-platform-auth-external", emptyList())
+                    , singletonMap("system/composum/platform/composum-platform-auth-service",
+                            singletonList("composum-platform-administrators"))
+                    , null);
+        } catch (RuntimeException e) {
+            LOG.error("" + e, e);
+            throw new PackageException(e);
         }
     }
 

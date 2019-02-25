@@ -1,4 +1,4 @@
-package com.composum.sling.platform.keycloak;
+package com.composum.platform.auth.keycloak;
 
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.PersistenceException;
@@ -23,14 +23,14 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 
-import static com.composum.sling.platform.keycloak.KeycloakAuthenticationFilter.debug;
+import static com.composum.platform.auth.keycloak.KeycloakAuthenticationFilter.debug;
 
 /**
  * Authentication handler that uses Keycloak to perform authentication for us, which is handling the the nitty gritty details of login via various providers for us. We use SAML to interface Keycloak, since that seems simpler to include than using OpenID.
  *
  * @see "https://www.keycloak.org/docs-api/4.8/javadocs/index.html"
  */
-@Component(name = "com.composum.sling.platform.keycloak.KeycloakAuthenticationHandler",
+@Component(name = "KeycloakAuthenticationHandler",
         property = {
                 AuthenticationHandler.TYPE_PROPERTY + "=" + KeycloakAuthenticationHandler.KEYCLOAK_AUTH,
                 AuthenticationHandler.PATH_PROPERTY + "=/content/test/composum/authtest",

@@ -112,6 +112,9 @@
                             <root>/content/test/composum/authtest</root>
                         </filter>
                         <filter>
+                            <root>/home/users/keycloak</root>
+                        </filter>
+                        <filter>
                             <root>/libs/composum/platform/install</root>
                             <includes>
                                 <include>.*/org.apache.sling.auth.*\.jar</include>

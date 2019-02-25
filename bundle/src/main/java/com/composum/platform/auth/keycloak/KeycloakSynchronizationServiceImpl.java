@@ -1,13 +1,10 @@
-package com.composum.sling.platform.keycloak;
+package com.composum.platform.auth.keycloak;
 
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.UserManager;
-import org.apache.sling.api.resource.LoginException;
-import org.apache.sling.api.resource.PersistenceException;
-import org.apache.sling.api.resource.ResourceResolver;
-import org.apache.sling.api.resource.ResourceResolverFactory;
+import org.apache.sling.api.resource.*;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.*;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
@@ -17,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import javax.jcr.ItemNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import java.security.Principal;
@@ -30,15 +28,7 @@ import java.util.Objects;
 @Designate(ocd = KeycloakSynchronizationServiceImpl.Configuration.class)
 public class KeycloakSynchronizationServiceImpl implements KeycloakSynchronizationService {
 
-    // TODO actually use this one.
-    public static final String PLATFORM_SERVICE_USER = "composum-platform-service";
-
     private static final Logger LOG = LoggerFactory.getLogger(KeycloakSynchronizationServiceImpl.class);
-
-    /**
-     * A default group the newly created users are assigned to, unless overridden by configuration.
-     */
-    public static final String DEFAULT_GROUP = "composum-auth-external";
 
     private Configuration config;
 
@@ -53,7 +43,7 @@ public class KeycloakSynchronizationServiceImpl implements KeycloakSynchronizati
         String userpath() default "/home/users/keycloak";
 
         @AttributeDefinition(name = "New user groups", description = "A set of groups a newly synchronized user is assigned to")
-        String[] groups() default {DEFAULT_GROUP};
+        String[] groups() default {"composum-platform-auth-external"};
     }
 
     @Activate
@@ -70,9 +60,10 @@ public class KeycloakSynchronizationServiceImpl implements KeycloakSynchronizati
 
     @Override
     public Authorizable createOrUpdateUser(@Nonnull KeycloakCredentials credentials) throws RepositoryException, LoginException, PersistenceException {
-        // try (ResourceResolver adminResolver = resolverFactory.getServiceResourceResolver(null)) { // FIXME How to do this?
-        try (ResourceResolver adminResolver = resolverFactory.getAdministrativeResourceResolver(null)) {
+        try (ResourceResolver adminResolver = resolverFactory.getServiceResourceResolver(null)) { // FIXME How to do this?
+            // try (ResourceResolver adminResolver = resolverFactory.getAdministrativeResourceResolver(null)) {
             JackrabbitSession session = (JackrabbitSession) adminResolver.adaptTo(Session.class);
+
             UserManager userManager = Objects.requireNonNull(session.getUserManager());
             String userId = credentials.getUserId();
             Authorizable user = userManager.getAuthorizable(userId);
@@ -84,7 +75,12 @@ public class KeycloakSynchronizationServiceImpl implements KeycloakSynchronizati
                 user = userManager.createUser(userId, credentials.getPseudoPassword(), principal, userpath);
                 for (String groupname : config.groups()) {
                     Group group = (Group) userManager.getAuthorizable(groupname);
-                    group.addMember(user);
+                    if (group != null) {
+                        group.addMember(user);
+                    } else {
+                        LOG.error("Configured default group {} not available", groupname);
+                        throw new ItemNotFoundException("Group not found: " + groupname);
+                    }
                 }
                 adminResolver.commit();
                 LOG.info("User created: {}", user);
