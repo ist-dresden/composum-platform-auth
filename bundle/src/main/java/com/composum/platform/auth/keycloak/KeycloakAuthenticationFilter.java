@@ -128,12 +128,14 @@ public class KeycloakAuthenticationFilter extends SamlFilter implements Filter {
                     LOG.info("Attr {} = {}", name, session.getAttribute(name));
                 }
                 SamlSession samlSession = KeycloakAuthenticationHandler.getAccount(request);
-                LOG.info("SamlSession: {}", ToStringBuilder.reflectionToString(samlSession, ToStringStyle.DEFAULT_STYLE, true));
-                LOG.info("Principal: {}", ToStringBuilder.reflectionToString(samlSession.getPrincipal(), ToStringStyle.DEFAULT_STYLE, true));
-                LOG.info("Assertion: {}", ToStringBuilder.reflectionToString(samlSession.getPrincipal().getAssertion(), ToStringStyle.DEFAULT_STYLE, true));
+                if (null != samlSession) {
+                    LOG.info("SamlSession: {}", ToStringBuilder.reflectionToString(samlSession, ToStringStyle.DEFAULT_STYLE, true));
+                    LOG.info("Principal: {}", ToStringBuilder.reflectionToString(samlSession.getPrincipal(), ToStringStyle.DEFAULT_STYLE, true));
+                    LOG.info("Assertion: {}", ToStringBuilder.reflectionToString(samlSession.getPrincipal().getAssertion(), ToStringStyle.DEFAULT_STYLE, true));
+                }
             }
         } catch (Exception e) {
-            LOG.error(e.toString());
+            LOG.error("debug", e);
         }
         try {
             HttpSession session = request.getSession(false);
@@ -151,10 +153,10 @@ public class KeycloakAuthenticationFilter extends SamlFilter implements Filter {
                         if (null != array || array.length == 0) super.append(buffer, fieldName, array, fullDetail);
                     }
                 };
-                // LOG.info("SamlSession: {}", ToStringBuilder.reflectionToString(samlSession, toStringStyle, true));
+                // if (samlSession != null) LOG.info("SamlSession: {}", ToStringBuilder.reflectionToString(samlSession, toStringStyle, true));
             }
         } catch (Exception e) {
-            LOG.error("{}", e);
+            LOG.error("debug", e);
         }
     }
 
