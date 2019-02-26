@@ -83,7 +83,7 @@ public class KeycloakAuthenticationHandler extends DefaultAuthenticationFeedback
         SamlSession samlSession = getAccount(request);
         if (samlSession != null) {
             LOG.info("Found SamlSession");
-            debug(request);
+            debug(request, LOG);
             KeycloakCredentials credentials = new KeycloakCredentials(samlSession);
             try {
                 keycloakSynchronizationService.createOrUpdateUser(credentials);
@@ -100,7 +100,7 @@ public class KeycloakAuthenticationHandler extends DefaultAuthenticationFeedback
     @Override
     public boolean requestCredentials(HttpServletRequest request, HttpServletResponse response) throws IOException {
         LOG.info("requestCredentials");
-        debug(request);
+        debug(request, LOG);
         boolean result = false;
         return result;
     }
@@ -108,7 +108,7 @@ public class KeycloakAuthenticationHandler extends DefaultAuthenticationFeedback
     @Override
     public void dropCredentials(HttpServletRequest request, HttpServletResponse response) throws IOException {
         LOG.info("dropCredentials");
-        debug(request);
+        debug(request, LOG);
         HttpSession session = request.getSession(false);
         if (null != session) {
             session.removeAttribute(SamlSession.class.getName());

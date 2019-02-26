@@ -52,14 +52,15 @@ public class KeycloakAuthenticationFilter extends SamlFilter implements Filter {
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
         HttpServletRequest request = (HttpServletRequest) req;
         HttpServletResponse response = (HttpServletResponse) res;
-        if ("true".equals(request.getParameter("logout"))) {
+        if ("true".equals(request.getParameter("logout"))) { // TODO remove when done debugging
             LOG.info("LOGOUT");
             request.logout();
             request.getSession(true).invalidate();
             response.setStatus(HttpServletResponse.SC_OK);
             return;
         }
-        debug(request);
+        LOG.info(">> doFilter");
+        debug(request, LOG);
         if (request.getUserPrincipal() == null || "anonymous".equals(request.getRemoteUser())
                 || "true".equals(request.getParameter(GeneralConstants.GLOBAL_LOGOUT))) {
             ExceptionSavingFilterChain chainWrapper = new ExceptionSavingFilterChain(chain);
@@ -76,7 +77,7 @@ public class KeycloakAuthenticationFilter extends SamlFilter implements Filter {
             chain.doFilter(request, response);
         }
         LOG.info("<< doFilter");
-        debug(request);
+        debug(request, LOG);
     }
 
     protected void logout(HttpServletRequest request) throws ServletException {
@@ -115,27 +116,27 @@ public class KeycloakAuthenticationFilter extends SamlFilter implements Filter {
         }
     }
 
-    static void debug(HttpServletRequest request) {
+    static void debug(HttpServletRequest request, Logger log) {
         try {
             Principal userPrincipal = request.getUserPrincipal();
             if (null != userPrincipal) {
-                LOG.info("UserPrincipal: {}", ToStringBuilder.reflectionToString(userPrincipal, ToStringStyle.MULTI_LINE_STYLE, true));
+                log.info("UserPrincipal: {}", ToStringBuilder.reflectionToString(userPrincipal, ToStringStyle.MULTI_LINE_STYLE, true));
             }
             HttpSession session = request.getSession(false);
             if (session != null) {
-                LOG.info("SessionID: {}", session.getId());
+                log.info("SessionID: {}", session.getId());
                 for (String name : Collections.list(session.getAttributeNames())) {
-                    LOG.info("Attr {} = {}", name, session.getAttribute(name));
+                    log.info("Attr {} = {}", name, session.getAttribute(name));
                 }
                 SamlSession samlSession = KeycloakAuthenticationHandler.getAccount(request);
                 if (null != samlSession) {
-                    LOG.info("SamlSession: {}", ToStringBuilder.reflectionToString(samlSession, ToStringStyle.DEFAULT_STYLE, true));
-                    LOG.info("Principal: {}", ToStringBuilder.reflectionToString(samlSession.getPrincipal(), ToStringStyle.DEFAULT_STYLE, true));
-                    LOG.info("Assertion: {}", ToStringBuilder.reflectionToString(samlSession.getPrincipal().getAssertion(), ToStringStyle.DEFAULT_STYLE, true));
+                    log.info("SamlSession: {}", ToStringBuilder.reflectionToString(samlSession, ToStringStyle.DEFAULT_STYLE, true));
+                    log.info("Principal: {}", ToStringBuilder.reflectionToString(samlSession.getPrincipal(), ToStringStyle.DEFAULT_STYLE, true));
+                    log.info("Assertion: {}", ToStringBuilder.reflectionToString(samlSession.getPrincipal().getAssertion(), ToStringStyle.DEFAULT_STYLE, true));
                 }
             }
         } catch (Exception e) {
-            LOG.error("debug", e);
+            log.error("debug", e);
         }
         try {
             HttpSession session = request.getSession(false);
@@ -156,7 +157,7 @@ public class KeycloakAuthenticationFilter extends SamlFilter implements Filter {
                 // if (samlSession != null) LOG.info("SamlSession: {}", ToStringBuilder.reflectionToString(samlSession, toStringStyle, true));
             }
         } catch (Exception e) {
-            LOG.error("debug", e);
+            log.error("debug", e);
         }
     }
 
