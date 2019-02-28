@@ -41,7 +41,7 @@ public class KeycloakSynchronizationServiceImpl implements KeycloakSynchronizati
     @Reference
     protected ResourceResolverFactory resolverFactory;
 
-    @ObjectClassDefinition(name = "Keycloak Synchronization Service",
+    @ObjectClassDefinition(name = "Composum Platform Keycloak Synchronization Service",
             description = "Creates / updates users authorized by Keycloak")
     protected @interface Configuration {
 

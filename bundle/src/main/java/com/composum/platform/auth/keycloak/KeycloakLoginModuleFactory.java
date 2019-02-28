@@ -21,7 +21,7 @@ public class KeycloakLoginModuleFactory implements LoginModuleFactory {
 
     private Configuration config;
 
-    @ObjectClassDefinition(name = "Keycloak Login Module Factory",
+    @ObjectClassDefinition(name = "Composum Platform Keycloak Login Module Factory",
             description = "Factory for Keycloak Login Modules")
     protected @interface Configuration {
 

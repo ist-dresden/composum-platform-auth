@@ -1,83 +1,151 @@
 package com.composum.platform.auth.keycloak;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.MultilineRecursiveToStringStyle;
 import org.apache.commons.lang3.builder.RecursiveToStringStyle;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.sling.SlingFilter;
-import org.apache.felix.scr.annotations.sling.SlingFilterScope;
 import org.keycloak.adapters.saml.SamlConfigResolver;
 import org.keycloak.adapters.saml.SamlDeploymentContext;
 import org.keycloak.adapters.saml.SamlSession;
 import org.keycloak.adapters.saml.servlet.SamlFilter;
 import org.keycloak.adapters.spi.InMemorySessionIdMapper;
 import org.keycloak.saml.common.constants.GeneralConstants;
+import org.osgi.framework.Constants;
+import org.osgi.service.component.annotations.*;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.Designate;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.security.Principal;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * Deploys the keycloak {@link SamlFilter} into the Sling environment.
  */
-@SlingFilter(
-        label = "Composum Platform Authentication Filter",
-        description = "a servlet filter to provide authentication with keycloak",
-        scope = {SlingFilterScope.REQUEST},
-        order = 9000,
-        pattern = "/content/test/composum/authtest.*|/saml.*",
-        metatype = false)
+@Component(
+        service = {Filter.class},
+        property = {
+                Constants.SERVICE_DESCRIPTION + "=Composum Platform Keycloak Authentication Filter",
+                "sling.filter.scope=REQUEST",
+                "service.ranking:Integer=" + 9000
+        }
+)
+@Designate(ocd = KeycloakAuthenticationFilter.Config.class)
 public class KeycloakAuthenticationFilter extends SamlFilter implements Filter {
 
     private static final Logger LOG = LoggerFactory.getLogger(KeycloakAuthenticationFilter.class);
 
-    @Reference // TODO why doesn't org.osgi.service.component.annotations.Reference work?
-            SamlConfigResolver samlConfigResolver;
+    /**
+     * Pattern for the /saml URL that this filter must always cover.
+     */
+    protected static final Pattern SAMLREQUESTPATTERN = Pattern.compile("/saml.*");
+
+    @Reference
+    protected SamlConfigResolver samlConfigResolver;
+
+    protected volatile Config config;
+
+    @Nonnull
+    protected volatile List<Pattern> protectedUrlPatterns = Collections.EMPTY_LIST;
+
+    @ObjectClassDefinition(
+            name = "Composum Platform Keycloak Filter Configuration",
+            description = "A servlet filter to provide authentication using a Keycloak server"
+    )
+    @interface Config {
+        @AttributeDefinition(
+                name = "keycloak.filter.enabled",
+                description = "the on/off switch for the filter"
+        )
+        boolean enabled() default true;
+
+        @AttributeDefinition(
+                name = "Protected URIs",
+                description = "URI patterns (regex matching the full request.getURI() ) that for which keycloak authentication is tried. " +
+                        "You'll probably want to use .* on the end of each pattern."
+        )
+        String[] protected_uri_patterns() default {
+                "/content/test/composum/authtest.*" // FIXME preliminary, for testing purposes
+        };
+    }
 
     @Override
-    public void init(final FilterConfig filterConfig) throws ServletException {
-        deploymentContext = new SamlDeploymentContext(samlConfigResolver);
+    public void init(FilterConfig filterConfig) throws ServletException {
+        // this just avoids that SamlFilter.init() is called, which is wrong in a Sling context.
+    }
+
+    @Activate
+    @Modified
+    public final void activate(final Config config) {
+        this.config = config;
         idMapper = new InMemorySessionIdMapper();
+        deploymentContext = new SamlDeploymentContext(Objects.requireNonNull(samlConfigResolver));
+        List<Pattern> patterns = new ArrayList<>();
+        patterns.add(SAMLREQUESTPATTERN);
+        for (String pattern : config.protected_uri_patterns()) {
+            if (StringUtils.isNotBlank(pattern)) patterns.add(Pattern.compile(pattern.trim()));
+        }
+        protectedUrlPatterns = patterns;
+    }
+
+    @Deactivate
+    public final void deactivate() {
+        this.config = null;
+        protectedUrlPatterns = Collections.EMPTY_LIST;
+    }
+
+    protected boolean isActiveFor(String requestURI) {
+        if (!config.enabled()) return false;
+        for (Pattern pattern : protectedUrlPatterns) {
+            if (pattern.matcher(requestURI).matches()) return true;
+        }
+        return false;
     }
 
     @Override
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
         HttpServletRequest request = (HttpServletRequest) req;
         HttpServletResponse response = (HttpServletResponse) res;
-        if ("true".equals(request.getParameter("logout"))) { // TODO remove when done debugging
-            LOG.info("LOGOUT");
-            request.logout();
-            request.getSession(true).invalidate();
-            response.setStatus(HttpServletResponse.SC_OK);
-            return;
-        }
-        LOG.info(">> doFilter");
-        debug(">> doFilter", request, LOG);
-        if (request.getUserPrincipal() == null || "anonymous".equals(request.getRemoteUser())
-                || "true".equals(request.getParameter(GeneralConstants.GLOBAL_LOGOUT))) {
-            ExceptionSavingFilterChain chainWrapper = new ExceptionSavingFilterChain(chain);
-            try {
-                super.doFilter(req, res, chainWrapper);
-            } catch (IOException | ServletException | RuntimeException e) {
-                if (chainWrapper.exception == null) { // some exception in SamlFilter, not the chain. -> Logout.
-                    LOG.error("error in doFilter", e);
-                    logout(request);
-                }
-                throw e;
+        if (isActiveFor(request.getRequestURI())) {
+            if ("true".equals(request.getParameter("logout"))) { // TODO remove when done debugging
+                LOG.info("LOGOUT");
+                request.logout();
+                request.getSession(true).invalidate();
+                response.setStatus(HttpServletResponse.SC_OK);
+                return;
             }
-        } else { // user already logged in - do nothing.
+            LOG.info(">> doFilter");
+            debug(">> doFilter", request, LOG);
+            if (request.getUserPrincipal() == null || "anonymous".equals(request.getRemoteUser())
+                    || "true".equals(request.getParameter(GeneralConstants.GLOBAL_LOGOUT))) {
+                ExceptionSavingFilterChain chainWrapper = new ExceptionSavingFilterChain(chain);
+                try {
+                    super.doFilter(req, res, chainWrapper);
+                } catch (IOException | ServletException | RuntimeException e) {
+                    if (chainWrapper.exception == null) { // some exception in SamlFilter, not the chain. -> Logout.
+                        LOG.error("error in doFilter", e);
+                        logout(request);
+                    }
+                    throw e;
+                }
+            } else { // user already logged in - do nothing.
+                chain.doFilter(request, response);
+            }
+            LOG.info("<< doFilter");
+            debug("<< doFilter", request, LOG);
+        } else { // not active
             chain.doFilter(request, response);
         }
-        LOG.info("<< doFilter");
-        debug("<< doFilter", request, LOG);
     }
 
     protected void logout(HttpServletRequest request) throws ServletException {

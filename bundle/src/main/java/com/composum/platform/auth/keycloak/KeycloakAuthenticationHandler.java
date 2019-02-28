@@ -30,7 +30,7 @@ import static com.composum.platform.auth.keycloak.KeycloakAuthenticationFilter.d
  *
  * @see "https://www.keycloak.org/docs-api/4.8/javadocs/index.html"
  */
-@Component(name = "KeycloakAuthenticationHandler",
+@Component(name = "Composum Platform Keycloak Authentication Handler",
         property = {
                 AuthenticationHandler.TYPE_PROPERTY + "=" + KeycloakAuthenticationHandler.KEYCLOAK_AUTH,
                 AuthenticationHandler.PATH_PROPERTY + "=/content/test/composum/authtest",
