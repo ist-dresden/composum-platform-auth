@@ -1,10 +1,14 @@
 package com.composum.platform.auth.keycloak;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.UserManager;
-import org.apache.sling.api.resource.*;
+import org.apache.sling.api.resource.LoginException;
+import org.apache.sling.api.resource.PersistenceException;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.*;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
@@ -17,7 +21,9 @@ import javax.annotation.Nonnull;
 import javax.jcr.ItemNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
+import java.security.SecureRandom;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -48,7 +54,7 @@ public class KeycloakSynchronizationServiceImpl implements KeycloakSynchronizati
 
     @Activate
     @Modified
-    protected final void activate(final ComponentContext componentContext, final Configuration config) {
+    protected final void activate(final ComponentContext componentContext, final Configuration config) throws NoSuchAlgorithmException {
         this.config = config;
     }
 
@@ -71,7 +77,10 @@ public class KeycloakSynchronizationServiceImpl implements KeycloakSynchronizati
                 String userpath = config.userpath();
                 if (userId.contains("@"))
                     userpath = userpath + "/" + userId.substring(userId.indexOf('@') + 1).toLowerCase(Locale.ROOT);
-                user = userManager.createUser(userId, credentials.getPseudoPassword(), principal, userpath);
+                String pseudoPassword = credentials.getPseudoPassword();
+                if (StringUtils.isBlank(pseudoPassword) || pseudoPassword.length() < 10)
+                    pseudoPassword = null;
+                user = userManager.createUser(userId, null, principal, userpath);
                 for (String groupname : config.groups()) {
                     Group group = (Group) userManager.getAuthorizable(groupname);
                     if (group != null) {
@@ -90,4 +99,5 @@ public class KeycloakSynchronizationServiceImpl implements KeycloakSynchronizati
             return user;
         }
     }
+
 }
