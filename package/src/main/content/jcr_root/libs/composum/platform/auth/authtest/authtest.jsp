@@ -5,3 +5,8 @@
 <sling:defineObjects/>
 Page <%= resource.getPath() %> is rendered for <%= request.getUserPrincipal().getName() %>.
 
+<form action="/content/test/composum/authtest/fresh" method="POST" enctype="multipart/form-data">
+    <input type="text" name="title" value="blu">
+    <input type="text" name="text" value="bluf">
+    <input type="submit">
+</form>

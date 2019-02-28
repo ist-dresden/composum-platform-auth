@@ -17,7 +17,7 @@
         "acl": [
           {
             "allow": true,
-            "privileges": "jcr:read"
+            "privileges": "jcr:all"
           }
         ]
       }
