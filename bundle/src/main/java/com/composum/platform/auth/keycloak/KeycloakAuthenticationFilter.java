@@ -60,7 +60,7 @@ public class KeycloakAuthenticationFilter extends SamlFilter implements Filter {
             return;
         }
         LOG.info(">> doFilter");
-        debug(request, LOG);
+        debug(">> doFilter", request, LOG);
         if (request.getUserPrincipal() == null || "anonymous".equals(request.getRemoteUser())
                 || "true".equals(request.getParameter(GeneralConstants.GLOBAL_LOGOUT))) {
             ExceptionSavingFilterChain chainWrapper = new ExceptionSavingFilterChain(chain);
@@ -77,7 +77,7 @@ public class KeycloakAuthenticationFilter extends SamlFilter implements Filter {
             chain.doFilter(request, response);
         }
         LOG.info("<< doFilter");
-        debug(request, LOG);
+        debug("<< doFilter", request, LOG);
     }
 
     protected void logout(HttpServletRequest request) throws ServletException {
@@ -116,23 +116,26 @@ public class KeycloakAuthenticationFilter extends SamlFilter implements Filter {
         }
     }
 
-    static void debug(HttpServletRequest request, Logger log) {
+    static void debug(String calllocation, HttpServletRequest request, Logger log) {
+        if (!log.isInfoEnabled()) return;
+
+        StringBuilder buf = new StringBuilder();
         try {
             Principal userPrincipal = request.getUserPrincipal();
             if (null != userPrincipal) {
-                log.info("UserPrincipal: {}", ToStringBuilder.reflectionToString(userPrincipal, ToStringStyle.MULTI_LINE_STYLE, true));
+                buf.append("UserPrincipal: ").append(ToStringBuilder.reflectionToString(userPrincipal, ToStringStyle.MULTI_LINE_STYLE, true));
             }
             HttpSession session = request.getSession(false);
             if (session != null) {
-                log.info("SessionID: {}", session.getId());
+                buf.append("\nSessionID: ").append(session.getId());
                 for (String name : Collections.list(session.getAttributeNames())) {
-                    log.info("Attr {} = {}", name, session.getAttribute(name));
+                    buf.append("\nAttr ").append(name).append(" = ").append(session.getAttribute(name));
                 }
                 SamlSession samlSession = KeycloakAuthenticationHandler.getAccount(request);
                 if (null != samlSession) {
-                    log.info("SamlSession: {}", ToStringBuilder.reflectionToString(samlSession, ToStringStyle.DEFAULT_STYLE, true));
-                    log.info("Principal: {}", ToStringBuilder.reflectionToString(samlSession.getPrincipal(), ToStringStyle.DEFAULT_STYLE, true));
-                    log.info("Assertion: {}", ToStringBuilder.reflectionToString(samlSession.getPrincipal().getAssertion(), ToStringStyle.DEFAULT_STYLE, true));
+                    buf.append("\nSamlSession: ").append(ToStringBuilder.reflectionToString(samlSession, ToStringStyle.DEFAULT_STYLE, true));
+                    buf.append("\nPrincipal: ").append(ToStringBuilder.reflectionToString(samlSession.getPrincipal(), ToStringStyle.DEFAULT_STYLE, true));
+                    buf.append("\nAssertion: ").append(ToStringBuilder.reflectionToString(samlSession.getPrincipal().getAssertion(), ToStringStyle.DEFAULT_STYLE, true));
                 }
             }
         } catch (Exception e) {
@@ -154,11 +157,14 @@ public class KeycloakAuthenticationFilter extends SamlFilter implements Filter {
                         if (null != array || array.length == 0) super.append(buffer, fieldName, array, fullDetail);
                     }
                 };
-                // if (samlSession != null) LOG.info("SamlSession: {}", ToStringBuilder.reflectionToString(samlSession, toStringStyle, true));
+                if (0 == 1 && samlSession != null) {
+                    buf.append("\nSamlSession: ").append(ToStringBuilder.reflectionToString(samlSession, toStringStyle, true));
+                }
             }
         } catch (Exception e) {
             log.error("debug", e);
         }
+        if (buf.length() > 0) log.info("Session info at {} for {}\n{}", calllocation, request.getRequestURI(), buf);
     }
 
 }

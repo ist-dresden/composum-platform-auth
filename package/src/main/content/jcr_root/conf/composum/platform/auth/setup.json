@@ -31,10 +31,7 @@
         "acl": [
           {
             "allow": true,
-            "privileges": [
-              "jcr:read",
-              "jcr:write"
-            ]
+            "privileges": "jcr:all"
           }
         ]
       }
@@ -52,6 +49,22 @@
               "jcr:read",
               "jcr:modifyProperties",
               "jcr:modifyAccessControl"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "/conf/composum/platform/auth",
+    "acl": [
+      {
+        "principal": "composum-platform-auth-service",
+        "acl": [
+          {
+            "allow": true,
+            "privileges": [
+              "jcr:read"
             ]
           }
         ]

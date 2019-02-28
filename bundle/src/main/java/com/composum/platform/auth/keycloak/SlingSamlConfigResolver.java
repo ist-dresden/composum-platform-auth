@@ -36,7 +36,7 @@ public class SlingSamlConfigResolver implements SamlConfigResolver {
     @Override
     public SamlDeployment resolve(HttpFacade.Request request) {
         InputStream configInputStream = null;
-        try (@Nonnull ResourceResolver adminResolver = resolverFactory.getAdministrativeResourceResolver(null)) {
+        try (@Nonnull ResourceResolver adminResolver = resolverFactory.getServiceResourceResolver(null)) {
 
             Resource configuration = adminResolver.getResource(KEYCLOAK_SAML_XML + JCR_CONTENT_SUFFIX);
             configInputStream = configuration.adaptTo(InputStream.class);

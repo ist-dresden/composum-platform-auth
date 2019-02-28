@@ -60,9 +60,8 @@ public class KeycloakSynchronizationServiceImpl implements KeycloakSynchronizati
 
     @Override
     public Authorizable createOrUpdateUser(@Nonnull KeycloakCredentials credentials) throws RepositoryException, LoginException, PersistenceException {
-        try (ResourceResolver adminResolver = resolverFactory.getServiceResourceResolver(null)) { // FIXME How to do this?
-            // try (ResourceResolver adminResolver = resolverFactory.getAdministrativeResourceResolver(null)) {
-            JackrabbitSession session = (JackrabbitSession) adminResolver.adaptTo(Session.class);
+        try (ResourceResolver serviceResolver = resolverFactory.getServiceResourceResolver(null)) {
+            JackrabbitSession session = (JackrabbitSession) serviceResolver.adaptTo(Session.class);
 
             UserManager userManager = Objects.requireNonNull(session.getUserManager());
             String userId = credentials.getUserId();
@@ -82,7 +81,7 @@ public class KeycloakSynchronizationServiceImpl implements KeycloakSynchronizati
                         throw new ItemNotFoundException("Group not found: " + groupname);
                     }
                 }
-                adminResolver.commit();
+                serviceResolver.commit();
                 LOG.info("User created: {}", user);
             } else {
                 LOG.info("User exists for {}", userId);
