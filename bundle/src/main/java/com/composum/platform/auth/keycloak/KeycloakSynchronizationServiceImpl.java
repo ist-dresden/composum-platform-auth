@@ -21,9 +21,10 @@ import javax.annotation.Nonnull;
 import javax.jcr.ItemNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Value;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
-import java.security.SecureRandom;
+import java.util.Calendar;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -35,6 +36,8 @@ import java.util.Objects;
 public class KeycloakSynchronizationServiceImpl implements KeycloakSynchronizationService {
 
     private static final Logger LOG = LoggerFactory.getLogger(KeycloakSynchronizationServiceImpl.class);
+
+    public static final String PROPERTY_LASTLOGIN = "lastLogin";
 
     private Configuration config;
 
@@ -90,12 +93,13 @@ public class KeycloakSynchronizationServiceImpl implements KeycloakSynchronizati
                         throw new ItemNotFoundException("Group not found: " + groupname);
                     }
                 }
-                serviceResolver.commit();
-                LOG.info("User created: {}", user);
+                LOG.info("Creating user: {}", user);
             } else {
                 LOG.info("User exists for {}", userId);
-                // TODO update last access time
             }
+            Value now = session.getValueFactory().createValue(Calendar.getInstance());
+            user.setProperty(PROPERTY_LASTLOGIN, now);
+            serviceResolver.commit();
             return user;
         }
     }
