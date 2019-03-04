@@ -45,8 +45,8 @@ public class KeycloakSynchronizationServiceImpl implements KeycloakSynchronizati
             description = "Creates / updates users authorized by Keycloak")
     protected @interface Configuration {
 
-        @AttributeDefinition(name = "User path", description = "JCR path below which the users are created")
-        String userpath() default "/home/users/keycloak";
+        @AttributeDefinition(name = "User path", description = "JCR path below which the users are created (relative path below /home/users/)")
+        String userpath() default "keycloak";
 
         @AttributeDefinition(name = "New user groups", description = "A set of groups a newly synchronized user is assigned to")
         String[] groups() default {"composum-platform-auth-external"};
@@ -94,7 +94,7 @@ public class KeycloakSynchronizationServiceImpl implements KeycloakSynchronizati
                 LOG.info("User created: {}", user);
             } else {
                 LOG.info("User exists for {}", userId);
-                // TODO
+                // TODO update last access time
             }
             return user;
         }

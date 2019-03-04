@@ -109,10 +109,8 @@
                             <root>/libs/composum/platform/auth</root>
                         </filter>
                         <filter>
+                            <!-- for testing purposes only TODO move to appropriate location -->
                             <root>/content/test/composum/authtest</root>
-                        </filter>
-                        <filter>
-                            <root>/home/users/keycloak</root>
                         </filter>
                         <filter>
                             <root>/libs/composum/platform/install</root>

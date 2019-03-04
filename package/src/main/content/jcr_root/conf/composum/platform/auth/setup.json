@@ -25,6 +25,7 @@
   },
   {
     "path": "/home/users/keycloak",
+    "jcr:primaryType": "rep:AuthorizableFolder",
     "acl": [
       {
         "principal": "composum-platform-auth-service",
