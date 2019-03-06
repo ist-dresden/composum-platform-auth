@@ -6,7 +6,6 @@
 		<groupId>com.composum.sling.platform</groupId>
 		<artifactId>composum-sling-platform</artifactId>
 		<version>1.0.0-SNAPSHOT</version>
-		<relativePath>../platform</relativePath>
 	</parent>
 
 	<groupId>com.composum.platform</groupId>

@@ -1,18 +1,24 @@
 package com.composum.platform.auth.keycloak;
 
+import com.composum.sling.platform.security.PlatformAccessFilterAuthPlugin;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.MultilineRecursiveToStringStyle;
 import org.apache.commons.lang3.builder.RecursiveToStringStyle;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+import org.apache.sling.api.SlingHttpServletRequest;
+import org.apache.sling.api.SlingHttpServletResponse;
 import org.keycloak.adapters.saml.SamlConfigResolver;
 import org.keycloak.adapters.saml.SamlDeploymentContext;
 import org.keycloak.adapters.saml.SamlSession;
 import org.keycloak.adapters.saml.servlet.SamlFilter;
 import org.keycloak.adapters.spi.InMemorySessionIdMapper;
-import org.keycloak.saml.common.constants.GeneralConstants;
 import org.osgi.framework.Constants;
-import org.osgi.service.component.annotations.*;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
@@ -20,28 +26,34 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
-import javax.servlet.*;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.security.Principal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
  * Deploys the keycloak {@link SamlFilter} into the Sling environment.
  */
 @Component(
-        service = {Filter.class},
+        service = {PlatformAccessFilterAuthPlugin.class},
         property = {
-                Constants.SERVICE_DESCRIPTION + "=Composum Platform Keycloak Authentication Filter",
-                "sling.filter.scope=REQUEST",
-                "service.ranking:Integer=" + 9000
+                Constants.SERVICE_DESCRIPTION + "=Composum Platform Keycloak Authentication Plugin"
         }
 )
 @Designate(ocd = KeycloakAuthenticationFilter.Config.class)
-public class KeycloakAuthenticationFilter extends SamlFilter implements Filter {
+public class KeycloakAuthenticationFilter extends SamlFilter implements PlatformAccessFilterAuthPlugin {
 
     private static final Logger LOG = LoggerFactory.getLogger(KeycloakAuthenticationFilter.class);
 
@@ -113,39 +125,34 @@ public class KeycloakAuthenticationFilter extends SamlFilter implements Filter {
     }
 
     @Override
-    public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
-        HttpServletRequest request = (HttpServletRequest) req;
-        HttpServletResponse response = (HttpServletResponse) res;
-        if (isActiveFor(request.getRequestURI())) {
-            if ("true".equals(request.getParameter("logout"))) { // TODO remove when done debugging
-                LOG.info("LOGOUT");
-                request.logout();
-                request.getSession(true).invalidate();
-                response.setStatus(HttpServletResponse.SC_OK);
-                return;
-            }
-            LOG.info(">> doFilter");
-            debug(">> doFilter", request, LOG);
-            if (request.getUserPrincipal() == null || "anonymous".equals(request.getRemoteUser())
-                    || "true".equals(request.getParameter(GeneralConstants.GLOBAL_LOGOUT))) {
-                ExceptionSavingFilterChain chainWrapper = new ExceptionSavingFilterChain(chain);
-                try {
-                    super.doFilter(req, res, chainWrapper);
-                } catch (IOException | ServletException | RuntimeException e) {
-                    if (chainWrapper.exception == null) { // some exception in SamlFilter, not the chain. -> Logout.
-                        LOG.error("error in doFilter", e);
-                        logout(request);
-                    }
-                    throw e;
-                }
-            } else { // user already logged in - do nothing.
-                chain.doFilter(request, response);
-            }
-            LOG.info("<< doFilter");
-            debug("<< doFilter", request, LOG);
-        } else { // not active
-            chain.doFilter(request, response);
+    public boolean examineRequest(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                                  FilterChain chain)
+            throws ServletException {
+        if ("true".equals(request.getParameter("logout"))) { // TODO remove when done debugging
+            LOG.info("LOGOUT");
+            request.logout();
+            request.getSession(true).invalidate();
+            response.setStatus(HttpServletResponse.SC_OK);
+            return true;
         }
+        return false;
+    }
+
+    @Override
+    public boolean triggerAuthentication(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                                         FilterChain chain)
+            throws ServletException, IOException {
+        ExceptionSavingFilterChain chainWrapper = new ExceptionSavingFilterChain(chain);
+        try {
+            super.doFilter(request, response, chainWrapper);
+        } catch (IOException | ServletException e) {
+            if (chainWrapper.exception == null) { // some exception in SamlFilter, not the chain. -> Logout.
+                LOG.error("error in doFilter", e);
+                logout(request);
+            }
+            throw e;
+        }
+        return true;
     }
 
     protected void logout(HttpServletRequest request) throws ServletException {
