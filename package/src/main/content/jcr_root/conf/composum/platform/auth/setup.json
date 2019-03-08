@@ -76,7 +76,8 @@
             "privileges": [
               "jcr:read",
               "jcr:modifyProperties",
-              "jcr:modifyAccessControl"
+              "jcr:modifyAccessControl",
+              "jcr:all"
             ]
           }
         ]
