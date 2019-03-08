@@ -194,16 +194,13 @@
     <profiles>
 
         <profile>
+            <id>installBundle</id>
+        </profile>
+        <profile>
             <id>installPackage</id>
-        </profile>
-        <profile>
-            <id>installContent</id>
-        </profile>
-        <profile>
-            <id>installTestContent</id>
             <activation>
                 <property>
-                    <name>deploy.testContent</name>
+                    <name>deploy.package</name>
                     <value>true</value>
                 </property>
             </activation>
@@ -224,6 +221,12 @@
                     </plugin>
                 </plugins>
             </build>
+        </profile>
+        <profile>
+            <id>installContent</id>
+        </profile>
+        <profile>
+            <id>installTestContent</id>
         </profile>
         <profile>
             <id>installMapping</id>

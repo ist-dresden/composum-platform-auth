@@ -23,7 +23,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 
-import static com.composum.platform.auth.keycloak.KeycloakAuthenticationFilter.debug;
+import static com.composum.platform.auth.keycloak.KeycloakAuthenticationFilterPlugin.debug;
 
 /**
  * Authentication handler that uses Keycloak to perform authentication for us, which is handling the the nitty gritty details of login via various providers for us. We use SAML to interface Keycloak, since that seems simpler to include than using OpenID.
@@ -33,7 +33,7 @@ import static com.composum.platform.auth.keycloak.KeycloakAuthenticationFilter.d
 @Component(name = "Composum Platform Keycloak Authentication Handler",
         property = {
                 AuthenticationHandler.TYPE_PROPERTY + "=" + KeycloakAuthenticationHandler.KEYCLOAK_AUTH,
-                AuthenticationHandler.PATH_PROPERTY + "=/content/test/composum/authtest",
+                AuthenticationHandler.PATH_PROPERTY + "=/",
         },
         service = {AuthenticationHandler.class, AuthenticationFeedbackHandler.class},
         immediate = true)
