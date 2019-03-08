@@ -10,7 +10,11 @@ import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.osgi.service.component.ComponentContext;
-import org.osgi.service.component.annotations.*;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
@@ -24,7 +28,10 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -71,37 +78,46 @@ public class KeycloakSynchronizationServiceImpl implements KeycloakSynchronizati
     public Authorizable createOrUpdateUser(@Nonnull KeycloakCredentials credentials) throws RepositoryException, LoginException, PersistenceException {
         try (ResourceResolver serviceResolver = resolverFactory.getServiceResourceResolver(null)) {
             JackrabbitSession session = (JackrabbitSession) serviceResolver.adaptTo(Session.class);
-
-            UserManager userManager = Objects.requireNonNull(session.getUserManager());
-            String userId = credentials.getUserId();
-            Authorizable user = userManager.getAuthorizable(userId);
-            if (user == null) {
-                Principal principal = credentials.getSamlSession().getPrincipal();
-                String userpath = config.userpath();
-                if (userId.contains("@"))
-                    userpath = userpath + "/" + userId.substring(userId.indexOf('@') + 1).toLowerCase(Locale.ROOT);
-                String pseudoPassword = credentials.getPseudoPassword();
-                if (StringUtils.isBlank(pseudoPassword) || pseudoPassword.length() < 10)
-                    pseudoPassword = null;
-                user = userManager.createUser(userId, null, principal, userpath);
-                for (String groupname : config.groups()) {
-                    Group group = (Group) userManager.getAuthorizable(groupname);
-                    if (group != null) {
-                        group.addMember(user);
-                    } else {
-                        LOG.error("Configured default group {} not available", groupname);
-                        throw new ItemNotFoundException("Group not found: " + groupname);
+            if (session != null) {
+                UserManager userManager = Objects.requireNonNull(session.getUserManager());
+                String userId = credentials.getUserId();
+                Authorizable user = userManager.getAuthorizable(userId);
+                if (user == null) {
+                    Principal principal = credentials.getSamlSession().getPrincipal();
+                    String userpath = config.userpath();
+                    if (userId.contains("@")) {
+                        final String domain = userId.substring(userId.indexOf('@') + 1).toLowerCase(Locale.ROOT);
+                        final List<String> segments = Arrays.asList(StringUtils.split(domain, "."));
+                        Collections.reverse(segments);
+                        userpath = userpath + "/" + StringUtils.join(segments, "/");
                     }
+                    String pseudoPassword = credentials.getPseudoPassword();
+                    if (StringUtils.isBlank(pseudoPassword) || pseudoPassword.length() < 10) {
+                        pseudoPassword = null;
+                    }
+                    user = userManager.createUser(userId, pseudoPassword, principal, userpath);
+                    for (String groupname : config.groups()) {
+                        Group group = (Group) userManager.getAuthorizable(groupname);
+                        if (group != null) {
+                            group.addMember(user);
+                        } else {
+                            LOG.error("Configured default group {} not available", groupname);
+                            throw new ItemNotFoundException("Group not found: " + groupname);
+                        }
+                    }
+                    LOG.info("Creating user: {}", user);
+                    session.save();
+                } else {
+                    LOG.info("User exists for {}", userId);
                 }
-                LOG.info("Creating user: {}", user);
+                Value now = session.getValueFactory().createValue(Calendar.getInstance());
+                user.setProperty(PROPERTY_LASTLOGIN, now);
+                serviceResolver.commit();
+                return user;
             } else {
-                LOG.info("User exists for {}", userId);
+                LOG.error("Can't adatapt service resolver to session!");
+                return null;
             }
-            Value now = session.getValueFactory().createValue(Calendar.getInstance());
-            user.setProperty(PROPERTY_LASTLOGIN, now);
-            serviceResolver.commit();
-            return user;
         }
     }
-
 }
