@@ -105,8 +105,7 @@ public class KeycloakSynchronizationServiceImpl implements KeycloakSynchronizati
                             throw new ItemNotFoundException("Group not found: " + groupname);
                         }
                     }
-                    LOG.info("Creating user: {}", user);
-                    session.save();
+                    LOG.info("Creating user: {}", userId);
                 } else {
                     LOG.info("User exists for {}", userId);
                 }
