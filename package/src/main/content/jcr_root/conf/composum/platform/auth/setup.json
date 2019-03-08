@@ -1,39 +1,5 @@
 [
   {
-    "path": "/",
-    "acl": [
-      {
-        "principal": "composum-platform-auth-service",
-        "acl": [
-          {
-            "allow": true,
-            "privileges": "jcr:read",
-            "restrictions": {
-              "rep:glob": ""
-            }
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "path": "/home",
-    "acl": [
-      {
-        "principal": "composum-platform-auth-service",
-        "acl": [
-          {
-            "allow": true,
-            "privileges": "jcr:read",
-            "restrictions": {
-              "rep:glob": ""
-            }
-          }
-        ]
-      }
-    ]
-  },
-  {
     "path": "/home/users",
     "acl": [
       {
