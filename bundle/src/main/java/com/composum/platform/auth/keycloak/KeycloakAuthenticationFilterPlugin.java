@@ -43,6 +43,7 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.security.Principal;
@@ -127,6 +128,12 @@ public final class KeycloakAuthenticationFilterPlugin implements PlatformAccessF
                 }
             };
             return doAuthenticate(request, response, deployment, facade, tokenStore, authenticator);
+        } else if ("true".equals(request.getParameter("logout"))) { // TODO remove when done debugging
+            LOG.info("LOGOUT");
+            request.logout();
+            request.getSession(true).invalidate();
+            response.setStatus(HttpServletResponse.SC_OK);
+            return true;
         }
         return false;
     }
