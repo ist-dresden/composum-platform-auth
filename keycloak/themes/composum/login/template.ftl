@@ -35,8 +35,7 @@
 <div class="login-wrapper-pf-page">
   <div class="login-wrapper-top">
     <h1 class="${properties.kcHeaderWrapperClass!}">${kcSanitize(msg("loginTitleHtml",(realm.displayNameHtml!'')))?no_esc}</h1>
-    <h4>an Apache Sling Application Platform</h4>
-    <h4>a.s.a.p.</h4>
+    <h4>the Apache Sling application platform authentication broker</h4>
   </div>
   <div class="${properties.kcLoginClass!}">
     <div class="${properties.kcFormCardClass!} <#if displayWide>${properties.kcFormCardAccountClass!}</#if>">
@@ -85,8 +84,7 @@
     </div>
   </div>
   <div class="login-wrapper-bottom">
-    <h4>a living multi site and multi application live system</h4>
-    <h4>based on the <a href="http://sling.apache.org/">Apache Sling</a> framework</h4>
+    <h4>a living multi site and multi application live system based on the <a href="http://sling.apache.org/">Apache Sling</a> framework</h4>
     <p>&copy; 2015ff <a href="http://www.ist-software.com/">IST GmbH Dresden, Germany</a></p>
   </div>
 </div>
