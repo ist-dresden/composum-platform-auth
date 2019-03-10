@@ -46,9 +46,7 @@
                             javax.annotation.*;version="[0,4)",
                             *
                         </Import-Package>
-                        <Embed-Dependency>
-                            *;scope=compile|runtime
-                        </Embed-Dependency>
+                        <Embed-Dependency>keycloak*</Embed-Dependency>
                     </instructions>
                 </configuration>
             </plugin>
@@ -86,6 +84,10 @@
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.commons.osgi</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.jcr.resource</artifactId>
+        </dependency>
 
         <!-- JCR API, Jackrabbit, VLT -->
         <dependency>
@@ -95,10 +97,20 @@
         <dependency>
             <groupId>org.apache.jackrabbit</groupId>
             <artifactId>jackrabbit-api</artifactId>
+            <version>2.16.3</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.jackrabbit</groupId>
             <artifactId>jackrabbit-jcr-commons</artifactId>
+            <version>2.16.3</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>oak-core</artifactId>
+            <version>1.8.8</version> <!-- FIXME version set explicitly from launchpad 11 for better debugging. -->
+            <scope>provided</scope>
         </dependency>
 
         <!-- JSON -->
@@ -154,6 +166,10 @@
             <groupId>org.apache.felix</groupId>
             <artifactId>org.apache.felix.scr.annotations</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>org.apache.felix.jaas</artifactId>
+        </dependency>
 
         <!-- Web Application API -->
         <dependency>
@@ -173,10 +189,65 @@
             <artifactId>jsr305</artifactId>
         </dependency>
 
-        <!-- JUnit -->
+        <!-- security -->
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-adapter-spi</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-servlet-adapter-spi</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-saml-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-saml-core-public</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-saml-adapter-api-public</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-saml-adapter-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-saml-servlet-filter-adapter</artifactId>
+        </dependency>
+        <!-- TODO: really needed? -->
+        <!--<dependency>-->
+        <!--<groupId>org.keycloak</groupId>-->
+        <!--<artifactId>keycloak-authz-client</artifactId>-->
+        <!--</dependency>-->
+        <!-- TODO: really needed? -->
+        <!--<dependency>-->
+        <!--<groupId>org.keycloak</groupId>-->
+        <!--<artifactId>keycloak-core</artifactId>-->
+        <!--</dependency>-->
+        <!-- TODO: really needed? -->
+        <!--<dependency>-->
+        <!--<groupId>org.keycloak</groupId>-->
+        <!--<artifactId>keycloak-adapter-core</artifactId>-->
+        <!--</dependency>-->
+
+        <!-- Testing -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient-osgi</artifactId>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>
