@@ -35,7 +35,7 @@
 <div class="login-wrapper-pf-page">
   <div class="login-wrapper-top">
     <h1 class="${properties.kcHeaderWrapperClass!}">${kcSanitize(msg("loginTitleHtml",(realm.displayNameHtml!'')))?no_esc}</h1>
-    <h4>the Apache Sling application platform authentication broker</h4>
+    <h4>the Apache Sling application platform authentication broker powered by <a href="https://www.keycloak.org/">Keycloak</a></h4>
   </div>
   <div class="${properties.kcLoginClass!}">
     <div class="${properties.kcFormCardClass!} <#if displayWide>${properties.kcFormCardAccountClass!}</#if>">
