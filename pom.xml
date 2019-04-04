@@ -34,6 +34,8 @@
 		<source.encoding>UTF-8</source.encoding>
 		<java.source>1.8</java.source>
 		<java.target>1.8</java.target>
+		<maven.compiler.source>${java.source}</maven.compiler.source>
+		<maven.compiler.target>${java.target}</maven.compiler.target>
 		<keycloak.version>4.8.3.Final</keycloak.version>
 	</properties>
 
