@@ -8,9 +8,11 @@ import org.apache.jackrabbit.vault.packaging.PackageException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import java.io.IOException;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
@@ -20,6 +22,14 @@ public class SetupHook implements InstallHook {
     private static final Logger LOG = LoggerFactory.getLogger(SetupHook.class);
 
     private static final String SETUP_ACLS = "/conf/composum/platform/auth/setup.json";
+
+    public static final Map<String, List<String>> AUTH_GROUPS;
+
+    static {
+        AUTH_GROUPS = new LinkedHashMap<>();
+        AUTH_GROUPS.put("composum/platform/composum-platform-auth-external", Collections.emptyList());
+        AUTH_GROUPS.put("composum/platform/composum-platform-users", singletonList("composum-platform-auth-external"));
+    }
 
     @Override
     @SuppressWarnings({"DuplicateStringLiteralInspection"})
@@ -41,11 +51,10 @@ public class SetupHook implements InstallHook {
     protected void setupUsers(InstallContext ctx) throws PackageException {
         try {
             SetupUtil.setupGroupsAndUsers(ctx,
-                    singletonMap("composum/platform/composum-platform-auth-external",
-                            singletonList("composum-platform-users"))
-                    , singletonMap("system/composum/platform/composum-platform-auth-service",
-                            singletonList("composum-platform-administrators"))
-                    , null);
+                    AUTH_GROUPS,
+                    singletonMap("system/composum/platform/composum-platform-auth-service",
+                            singletonList("composum-platform-administrators")),
+                    null);
         } catch (RuntimeException e) {
             LOG.error("" + e, e);
             throw new PackageException(e);
@@ -58,7 +67,7 @@ public class SetupHook implements InstallHook {
             Session session = ctx.getSession();
             setupService.addJsonAcl(session, SETUP_ACLS, null);
             session.save();
-        } catch (RepositoryException | IOException | RuntimeException e) {
+        } catch (Exception e) {
             LOG.error("" + e, e);
             throw new PackageException(e);
         }
