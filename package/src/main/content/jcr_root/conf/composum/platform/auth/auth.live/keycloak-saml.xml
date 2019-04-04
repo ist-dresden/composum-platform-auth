@@ -1,0 +1,42 @@
+<keycloak-saml-adapter xmlns="urn:keycloak:saml:adapter"
+                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                       xsi:schemaLocation="urn:keycloak:saml:adapter https://www.keycloak.org/schema/keycloak_saml_adapter_1_9.xsd">
+    <!-- FIXME hps Setting that probably need to be changed in the end
+        compare https://www.keycloak.org/docs/latest/securing_apps/index.html#saml-2 :
+        sslPolicy , turnOffChangeSessionIdOnLogin , element Keys, signaturesRequired .
+
+        Changes in comparison to download
+        https://auth.ist-software.com/auth/admin/master/console/#/realms/composum-demo/clients/f927bc02-72fa-4a6e-9c27-1d29141e47f8/installation
+        sslPolicy, turnOffChangeSessionIdOnLogin, autodetectBearerOnly, PrincipalNameMapping -->
+
+    <SP entityID="composum-cloud"
+        sslPolicy="EXTERNAL"
+        turnOffChangeSessionIdOnLogin="false"
+        autodetectBearerOnly="true"
+        logoutPage="/system/sling/logout">
+        <PrincipalNameMapping policy="FROM_ATTRIBUTE" attribute="email"/>
+        <IDP entityID="idp"
+             signaturesRequired="true">
+            <SingleSignOnService signRequest="false"
+                                 validateResponseSignature="true"
+                                 validateAssertionSignature="false"
+                                 requestBinding="POST"
+                                 bindingUrl="https://auth.ist-software.com/auth/realms/composum-demo/protocol/saml"/>
+            <SingleLogoutService signRequest="false"
+                                 signResponse="false"
+                                 validateRequestSignature="true"
+                                 validateResponseSignature="true"
+                                 requestBinding="POST"
+                                 responseBinding="POST"
+                                 postBindingUrl="https://auth.ist-software.com/auth/realms/composum-demo/protocol/saml"
+                                 redirectBindingUrl="https://auth.ist-software.com/auth/realms/composum-demo/protocol/saml"/>
+            <Keys>
+                <Key signing="true">
+                    <CertificatePem>
+                        MIICqTCCAZECBgFd9PdMqDANBgkqhkiG9w0BAQsFADAYMRYwFAYDVQQDDA1jb21wb3N1bS1kZW1vMB4XDTE3MDgxODEwNDg1NFoXDTI3MDgxODEwNTAzNFowGDEWMBQGA1UEAwwNY29tcG9zdW0tZGVtbzCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALWZmor3R+UhRy0d/kgYH6xrASSJ9JNOya4aYboALHSq+C8ZZLrT7VKrwGzG2BJSGMKkFaVI6Hsi6NtUmdnn8smj+//9f3j4P456WPojMAVU/thugj5Eyhe+iw9lSv9E101cndIzVCLawKZtqu2lT3kFxqFCv4ExfZXfWdRVsqur8ssk458Bsyc3Tk6RtctK9ZrG0V60RGxZuRAlJTvN2RP1VCGRmPVvT/qKeTL47EHfsyExaAvArrcVZlRjz01V5urqQ2Q2Kso2lTufaXwFJlVcxQHnjz2DmwXpDY1mLzMeV7jmpKRiCsaF9OoHoV7AO6LRkiJq4hwo221cQaDIiFsCAwEAATANBgkqhkiG9w0BAQsFAAOCAQEAoXB8HL+lLvsp+WvAxo0j1O71XS1U7Mtuk2gRTcr9NXpieVGxCRXsuViUgqlyLbSr24tJVG3Q6QlK+37ucf42wup24UT8IiIl9jPf2cp8JanvkJSpQg+bSpgkgmHTmpqRviOZF6yrrj3Uml0M6sQxL6j2riD9Q0tbUEb8ioNaTeBuATPwXqP5ePTqoTKCzTI5N8QW4l+1mqv2F+VrRYkV4dywRa1023vdoaIDPKzRRAGx6BPChsD+hXQZBQVVKCN9FTjQ4UAtMCubbLWwrQphqivdfbea7rFJwZurGKC0vsvqwvdjK7oQ49LA+R1WR/t2XOk0VtlF1qog8WNc0MJAWA==
+                    </CertificatePem>
+                </Key>
+            </Keys>
+        </IDP>
+    </SP>
+</keycloak-saml-adapter>
