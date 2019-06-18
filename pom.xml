@@ -20,7 +20,7 @@
 		<package.group>com/composum/platform</package.group>
 		<package.company>IST GmbH Dresden</package.company>
 		<bundle.category>composum,platform</bundle.category>
-		<composum.core.version>1.10.1</composum.core.version>
+		<composum.core.version>1.11.1-SNAPSHOT</composum.core.version>
 		<composum.platform.version>1.0.0-SNAPSHOT</composum.platform.version>
 		<sling.scheme>http</sling.scheme>
 		<sling.secure>false</sling.secure>
@@ -202,11 +202,11 @@
 
 
 			<!-- test -->
+			<!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
 			<dependency>
-				<!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
 				<groupId>org.junit.jupiter</groupId>
 				<artifactId>junit-jupiter-api</artifactId>
-				<version>5.3.2</version>
+				<version>5.5.0</version>
 				<scope>test</scope>
 			</dependency>
 
