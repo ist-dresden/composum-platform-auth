@@ -41,6 +41,7 @@
                             com.composum.sling.nodes.*;version="[1.10,2.1)",
                             org.apache.felix.shell;resolution:=optional,
                             javax.annotation.*;version="[0,4)",
+                            com.sun.security.jgss;resolution:=optional,
                             *
                         </Import-Package>
                         <Embed-Dependency>keycloak*</Embed-Dependency>
