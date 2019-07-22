@@ -60,7 +60,7 @@
         <!-- Composum Platform -->
         <dependency>
             <groupId>com.composum.sling.platform</groupId>
-            <artifactId>composum-sling-platform-security-bundle</artifactId>
+            <artifactId>composum-platform-security-bundle</artifactId>
         </dependency>
 
         <!-- Composum Nodes (Core) -->
@@ -192,6 +192,10 @@
         </dependency>
 
         <!-- security -->
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-servlet-filter-adapter</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-common</artifactId>
