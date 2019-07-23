@@ -55,7 +55,7 @@
 
         <!-- Composum Platform -->
         <dependency>
-            <groupId>com.composum.sling.platform</groupId>
+            <groupId>com.composum.platform</groupId>
             <artifactId>composum-platform-security-bundle</artifactId>
         </dependency>
 

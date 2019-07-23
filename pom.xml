@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>com.composum.sling.platform</groupId>
+		<groupId>com.composum.platform</groupId>
 		<artifactId>composum-platform</artifactId>
 		<version>1.0.3</version>
 	</parent>
@@ -38,13 +38,13 @@
 
 			<!-- Composum Platform -->
 			<dependency>
-				<groupId>com.composum.sling.platform</groupId>
+				<groupId>com.composum.platform</groupId>
 				<artifactId>composum-platform-security-bundle</artifactId>
 				<version>${composum.platform.version}</version>
 				<scope>provided</scope>
 			</dependency>
 			<dependency>
-				<groupId>com.composum.sling.platform</groupId>
+				<groupId>com.composum.platform</groupId>
 				<artifactId>composum-platform-commons-bundle</artifactId>
 				<version>${composum.platform.version}</version>
 				<scope>provided</scope>
