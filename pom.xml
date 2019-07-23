@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>com.composum.sling.platform</groupId>
 		<artifactId>composum-platform</artifactId>
-		<version>1.0.2</version>
+		<version>1.0.3</version>
 	</parent>
 
 	<groupId>com.composum.platform</groupId>
@@ -17,26 +17,8 @@
     <description>Maven parent for Composum Platform Auth services</description>
 
 	<properties>
-		<package.group>com/composum/platform</package.group>
-		<package.company>IST GmbH Dresden</package.company>
-		<bundle.category>composum,platform</bundle.category>
-		<composum.core.version>1.11.1-SNAPSHOT</composum.core.version>
-		<composum.platform.version>1.0.0-SNAPSHOT</composum.platform.version>
-		<sling.scheme>http</sling.scheme>
-		<sling.secure>false</sling.secure>
-		<sling.host>localhost</sling.host>
-		<sling.port>9090</sling.port>
-		<sling.context></sling.context>
-		<package.install>/bin/cpm/package.service.html</package.install>
-		<sling.user>admin</sling.user>
-		<sling.password>admin</sling.password>
-		<bundle.status.skip>true</bundle.status.skip>
-		<source.encoding>UTF-8</source.encoding>
-		<java.source>1.8</java.source>
-		<java.target>1.8</java.target>
-		<maven.compiler.source>${java.source}</maven.compiler.source>
-		<maven.compiler.target>${java.target}</maven.compiler.target>
 		<keycloak.version>4.8.3.Final</keycloak.version>
+		<composum.platform.version>1.0.3</composum.platform.version>
 	</properties>
 
 	<modules>
