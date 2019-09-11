@@ -124,7 +124,7 @@ public class KeycloakSynchronizationServiceImpl implements KeycloakSynchronizati
                 }
                 return user;
             } else {
-                LOG.error("Can't adatapt service resolver to session!");
+                LOG.error("Can't adapt service resolver to session!");
                 return null;
             }
         }

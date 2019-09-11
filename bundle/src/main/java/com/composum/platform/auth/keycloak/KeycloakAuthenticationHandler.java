@@ -1,5 +1,7 @@
 package com.composum.platform.auth.keycloak;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.auth.core.spi.AuthenticationFeedbackHandler;
@@ -44,9 +46,15 @@ public class KeycloakAuthenticationHandler extends DefaultAuthenticationFeedback
     public static final String KEYCLOAK_AUTH = "Keycloak";
 
     /**
-     * Session attribute name and attribute name in authinfo.
+     * Session attribute name and attribute name in authinfo. Written by Keycloak's auth library.
      */
     public static final String ATTR_SAMLSESSION = SamlSession.class.getName();
+
+    /**
+     * Session attribute where we store a mark that the user user was synchronized with the repository to avoid
+     * doing that several times a session.
+     */
+    protected static final String ATTR_USERISSYNCHRONIZED = KeycloakAuthenticationHandler.class.getName() + "_user";
 
     private ComponentContext context;
 
@@ -66,13 +74,17 @@ public class KeycloakAuthenticationHandler extends DefaultAuthenticationFeedback
             return (SamlSession) sessionAttribute;
         } else {
             LOG.error(ATTR_SAMLSESSION + " not instance of SamlSession. Logout.");
-            session.invalidate();
-            try {
-                request.logout();
-            } catch (ServletException e) {
-                LOG.error("" + e, e);
-            }
+            logout(request, session);
             return null;
+        }
+    }
+
+    protected static void logout(HttpServletRequest request, HttpSession session) {
+        if (session != null) { session.invalidate(); }
+        try {
+            request.logout();
+        } catch (ServletException e) {
+            LOG.error("" + e, e);
         }
     }
 
@@ -86,15 +98,45 @@ public class KeycloakAuthenticationHandler extends DefaultAuthenticationFeedback
             debug("extractCredentials found SamlSession", request, LOG);
             KeycloakCredentials credentials = new KeycloakCredentials(samlSession);
             try {
-                keycloakSynchronizationService.createOrUpdateUser(credentials);
-                LOG.info("Credentials created: {}", credentials);
-                result = new AuthenticationInfo(KEYCLOAK_AUTH, credentials.getUserId());
-                result.put(JcrResourceConstants.AUTHENTICATION_INFO_CREDENTIALS, credentials);
+                if (createOrUpdateUser(credentials, request)) {
+                    LOG.info("Credentials created: {}", credentials);
+                    result = new AuthenticationInfo(KEYCLOAK_AUTH, credentials.getUserId());
+                    result.put(JcrResourceConstants.AUTHENTICATION_INFO_CREDENTIALS, credentials);
+                } else {
+                    LOG.info("Could get user for {}", credentials.getUserId());
+                }
             } catch (RepositoryException | LoginException | PersistenceException e) {
                 LOG.error("Trouble creating/getting user " + credentials.getUserId(), e);
             }
         }
         return result;
+    }
+
+    /**
+     * Calls the {@link KeycloakSynchronizationService#createOrUpdateUser(KeycloakCredentials)} once a session to
+     * create or update the user.
+     */
+    protected boolean createOrUpdateUser(KeycloakCredentials credentials, HttpServletRequest request) throws RepositoryException, LoginException, PersistenceException {
+        HttpSession session = request.getSession(false);
+        SavedUserMarker savedUserMarker = session != null ? (SavedUserMarker) session.getAttribute(ATTR_USERISSYNCHRONIZED) : null;
+        if (savedUserMarker == null) {
+            Authorizable authinfo = keycloakSynchronizationService.createOrUpdateUser(credentials);
+            if (authinfo != null) {
+                savedUserMarker = new SavedUserMarker(authinfo.getID(), session != null ? session.getId() : null);
+                if (session != null) { session.setAttribute(ATTR_USERISSYNCHRONIZED, savedUserMarker); }
+                LOG.info("Synchronized user {}", credentials.getUserId());
+            } else {
+                LOG.error("Synchronization service could not find / create user for " + credentials.getUserId());
+                return false;
+            }
+        }
+        if (!savedUserMarker.validate(credentials.getUserId(), session)) {
+            LOG.error("Inconsistent state - logging out: different user " + credentials.getUserId() + " than saved in" +
+                    " session " + savedUserMarker.userid);
+            logout(request, session);
+            return false;
+        }
+        return true;
     }
 
     @Override
@@ -113,9 +155,30 @@ public class KeycloakAuthenticationHandler extends DefaultAuthenticationFeedback
         if (null != session) {
             session.removeAttribute(SamlSession.class.getName());
             session.removeAttribute(SamlSessionStore.CURRENT_ACTION);
+            session.removeAttribute(ATTR_SAMLSESSION);
+            session.removeAttribute(ATTR_USERISSYNCHRONIZED);
             // TODO idmapper?
         }
     }
 
+    /**
+     * Serves as a marker in the session that the user was created / updated in the JCR, so that we don't try that
+     * again.
+     */
+    private static class SavedUserMarker {
+        protected final String userid;
+        protected final String sessionId;
+
+        public SavedUserMarker(String userid, String sessionId) {
+            this.userid = userid;
+            this.sessionId = sessionId;
+        }
+
+        /** "Safety" check that the marker applies to this user and this session. */
+        public boolean validate(String userId, HttpSession session) {
+            return StringUtils.equals(userId, this.userid) &&
+                    StringUtils.equals(sessionId, session != null ? session.getId() : null);
+        }
+    }
 
 }
