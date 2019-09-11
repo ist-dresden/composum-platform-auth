@@ -5,6 +5,7 @@ import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.UserManager;
+import org.apache.jackrabbit.oak.api.CommitFailedException;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.ResourceResolver;
@@ -22,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import javax.jcr.InvalidItemStateException;
 import javax.jcr.ItemNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -82,7 +84,8 @@ public class KeycloakSynchronizationServiceImpl implements KeycloakSynchronizati
                 UserManager userManager = Objects.requireNonNull(session.getUserManager());
                 String userId = credentials.getUserId();
                 Authorizable user = userManager.getAuthorizable(userId);
-                if (user == null) {
+                boolean newUser = (user == null);
+                if (newUser) {
                     Principal principal = credentials.getSamlSession().getPrincipal();
                     String userpath = config.userpath();
                     if (userId.contains("@")) {
@@ -110,8 +113,15 @@ public class KeycloakSynchronizationServiceImpl implements KeycloakSynchronizati
                     LOG.info("User exists for {}", userId);
                 }
                 Value now = session.getValueFactory().createValue(Calendar.getInstance());
-                user.setProperty(PROPERTY_LASTLOGIN, now);
-                serviceResolver.commit();
+                try {
+                    user.setProperty(PROPERTY_LASTLOGIN, now);
+                    serviceResolver.commit();
+                } catch (InvalidItemStateException | PersistenceException e) {
+                    if (newUser) { throw e; }
+                    // Happens in race conditions, and failing to update the last login time isn't a real problem.
+                    // If we would throw the exception, we get a 404 for this request, which would be a real problem.
+                    LOG.warn("Ignored error updating last login time for " + userId, e);
+                }
                 return user;
             } else {
                 LOG.error("Can't adatapt service resolver to session!");
