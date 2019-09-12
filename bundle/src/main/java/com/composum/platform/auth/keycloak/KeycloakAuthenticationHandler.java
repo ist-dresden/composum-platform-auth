@@ -1,5 +1,6 @@
 package com.composum.platform.auth.keycloak;
 
+import com.composum.sling.core.concurrent.SequencerService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.sling.api.resource.LoginException;
@@ -61,6 +62,9 @@ public class KeycloakAuthenticationHandler extends DefaultAuthenticationFeedback
     @Reference
     private KeycloakSynchronizationService keycloakSynchronizationService;
 
+    @Reference
+    protected SequencerService<SequencerService.Token> sequencer;
+
     @Activate
     private void activate(final ComponentContext context) {
         this.context = context;
@@ -107,6 +111,7 @@ public class KeycloakAuthenticationHandler extends DefaultAuthenticationFeedback
                 }
             } catch (RepositoryException | LoginException | PersistenceException e) {
                 LOG.error("Trouble creating/getting user " + credentials.getUserId(), e);
+                logout(request, request.getSession(false));
             }
         }
         return result;
@@ -114,20 +119,29 @@ public class KeycloakAuthenticationHandler extends DefaultAuthenticationFeedback
 
     /**
      * Calls the {@link KeycloakSynchronizationService#createOrUpdateUser(KeycloakCredentials)} once a session to
-     * create or update the user.
+     * create or update the login time of the user. Since this can lead to conflicts if several threads do this at
+     * the same time,
      */
     protected boolean createOrUpdateUser(KeycloakCredentials credentials, HttpServletRequest request) throws RepositoryException, LoginException, PersistenceException {
         HttpSession session = request.getSession(false);
         SavedUserMarker savedUserMarker = session != null ? (SavedUserMarker) session.getAttribute(ATTR_USERISSYNCHRONIZED) : null;
         if (savedUserMarker == null) {
-            Authorizable authinfo = keycloakSynchronizationService.createOrUpdateUser(credentials);
-            if (authinfo != null) {
-                savedUserMarker = new SavedUserMarker(authinfo.getID(), session != null ? session.getId() : null);
-                if (session != null) { session.setAttribute(ATTR_USERISSYNCHRONIZED, savedUserMarker); }
-                LOG.info("Synchronized user {}", credentials.getUserId());
-            } else {
-                LOG.error("Synchronization service could not find / create user for " + credentials.getUserId());
-                return false;
+            SequencerService.Token token = sequencer.acquire(ATTR_USERISSYNCHRONIZED + credentials.getUserId());
+            try {
+                savedUserMarker = session != null ? (SavedUserMarker) session.getAttribute(ATTR_USERISSYNCHRONIZED) : null;
+                if (savedUserMarker == null) {
+                    Authorizable authinfo = keycloakSynchronizationService.createOrUpdateUser(credentials);
+                    if (authinfo != null) {
+                        savedUserMarker = new SavedUserMarker(authinfo.getID(), session != null ? session.getId() : null);
+                        if (session != null) { session.setAttribute(ATTR_USERISSYNCHRONIZED, savedUserMarker); }
+                        LOG.info("Synchronized user {}", credentials.getUserId());
+                    } else {
+                        LOG.error("Synchronization service could not find / create user for " + credentials.getUserId());
+                        return false;
+                    }
+                }
+            } finally {
+                sequencer.release(token);
             }
         }
         if (!savedUserMarker.validate(credentials.getUserId(), session)) {

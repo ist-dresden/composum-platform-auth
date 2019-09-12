@@ -37,6 +37,7 @@
                             com.composum.platform.auth.*
                         </Export-Package>
                         <Import-Package>
+                            !org.keycloak,!org.keycloak.adapters,!org.keycloak.representations,
                             com.composum.sling.core.*;version="[1.10,2.1)",
                             com.composum.sling.nodes.*;version="[1.10,2.1)",
                             org.apache.felix.shell;resolution:=optional,
