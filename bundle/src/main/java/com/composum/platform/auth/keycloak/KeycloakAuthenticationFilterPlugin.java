@@ -128,11 +128,10 @@ public final class KeycloakAuthenticationFilterPlugin implements PlatformAccessF
                 }
             };
             return doAuthenticate(request, response, deployment, facade, tokenStore, authenticator);
-        } else if ("true".equals(request.getParameter("logout"))) { // TODO remove when done debugging
-            LOG.info("LOGOUT");
-            request.logout();
-            request.getSession(true).invalidate();
-            response.setStatus(HttpServletResponse.SC_OK);
+        } else if ("true".equals(request.getParameter("GLO"))) {
+            LOG.info("GLOBAL LOGOUT of {}", request.getUserPrincipal());
+            triggerAuthentication(request, response, chain); // reads the GLO parameter and acts accordingly.
+            logout(request);
             return true;
         }
         return false;
