@@ -119,11 +119,12 @@ public final class KeycloakAuthenticationFilterPlugin implements PlatformAccessF
             SamlAuthenticator authenticator = new SamlAuthenticator(facade, deployment, tokenStore) {
                 @Override
                 protected void completeAuthentication(SamlSession account) {
-
+                    LOG.debug("examineRequest.completeAuthentication");
                 }
 
                 @Override
                 protected SamlAuthenticationHandler createBrowserHandler(HttpFacade facade, SamlDeployment deployment, SamlSessionStore sessionStore) {
+                    // SamlEndpoint receives the SAML data from keycloak
                     return new SamlEndpoint(facade, deployment, sessionStore);
                 }
             };
@@ -133,6 +134,9 @@ public final class KeycloakAuthenticationFilterPlugin implements PlatformAccessF
             triggerAuthentication(request, response, chain); // reads the GLO parameter and acts accordingly.
             logout(request);
             return true;
+        } else if ("true".equals(request.getParameter("locallogout"))) { // FIXME remove when debugging done
+            LOG.debug("Local logout for testing purposes");
+            logout(request);
         }
         return false;
     }
@@ -147,11 +151,12 @@ public final class KeycloakAuthenticationFilterPlugin implements PlatformAccessF
         SamlAuthenticator authenticator = new SamlAuthenticator(facade, deployment, tokenStore) {
             @Override
             protected void completeAuthentication(SamlSession account) {
-
+                LOG.debug("triggerAuthentication.completeAuthentication");
             }
 
             @Override
             protected SamlAuthenticationHandler createBrowserHandler(HttpFacade facade, SamlDeployment deployment, SamlSessionStore sessionStore) {
+                // the BrowserHandler is able to do redirects to keycloak
                 return new BrowserHandler(facade, deployment, sessionStore);
             }
         };
