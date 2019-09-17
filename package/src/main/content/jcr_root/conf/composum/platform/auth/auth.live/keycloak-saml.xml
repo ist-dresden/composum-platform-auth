@@ -13,7 +13,7 @@
         sslPolicy="EXTERNAL"
         turnOffChangeSessionIdOnLogin="false"
         autodetectBearerOnly="true"
-        logoutPage="/system/sling/logout">
+            logoutPage="">
         <PrincipalNameMapping policy="FROM_ATTRIBUTE" attribute="email"/>
         <IDP entityID="idp"
              signaturesRequired="true">

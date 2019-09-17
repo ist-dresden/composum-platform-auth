@@ -1,6 +1,8 @@
 package com.composum.platform.auth.keycloak;
 
+import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.platform.security.PlatformAccessFilterAuthPlugin;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.MultilineRecursiveToStringStyle;
 import org.apache.commons.lang3.builder.RecursiveToStringStyle;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -79,6 +81,9 @@ public final class KeycloakAuthenticationFilterPlugin implements PlatformAccessF
     @Reference
     protected SamlConfigResolver samlConfigResolver;
 
+    @Reference
+    protected CoreConfiguration coreConfiguration;
+
     @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.DYNAMIC)
     private volatile Authenticator authenticator;
 
@@ -139,9 +144,7 @@ public final class KeycloakAuthenticationFilterPlugin implements PlatformAccessF
         } else if ("true".equals(request.getParameter("GLO"))) {
             request.getRequestProgressTracker().log("GLOBAL LOGOUT of {0}", request.getUserPrincipal());
             LOG.info("GLOBAL LOGOUT of {}", request.getUserPrincipal());
-            // authenticatorLogout(request, response);
             triggerAuthentication(request, response, chain); // reads the GLO parameter and acts accordingly.
-            logout(request, response);
             return true;
         } else if ("true".equals(request.getParameter("locallogout"))) { // FIXME remove when debugging done
             request.getRequestProgressTracker().log("local logout of {0}", request.getUserPrincipal());
@@ -179,26 +182,23 @@ public final class KeycloakAuthenticationFilterPlugin implements PlatformAccessF
                                      @Nonnull final FilterSamlSessionStore tokenStore,
                                      @Nonnull final SamlAuthenticator authenticator)
             throws ServletException, IOException {
+        debug("doAuthenticate", request, LOG);
         AuthOutcome outcome = authenticator.authenticate();
+        LOG.debug("doAuthenticate state {} at ", outcome, request.getRequestURI());
         if (outcome == AuthOutcome.AUTHENTICATED) {
-            LOG.debug("AUTHENTICATED");
             return facade.isEnded();
         }
         if (outcome == AuthOutcome.LOGGED_OUT) {
             tokenStore.logoutAccount();
+            logout(request, response);
             String logoutPage = deployment.getLogoutPage();
-            if (logoutPage != null) {
-                if (PROTOCOL_PATTERN.matcher(logoutPage).find()) {
-                    response.sendRedirect(logoutPage);
-                    LOG.debug("Redirected to logout page '{}'", logoutPage);
-                } else {
-                    RequestDispatcher dispatcher = request.getRequestDispatcher(logoutPage);
-                    if (dispatcher != null) {
-                        dispatcher.forward(request, response);
-                    } else {
-                        LOG.warn("no dispatcher to forward to logout page");
-                    }
-                }
+            if (StringUtils.isBlank(logoutPage)) {
+                logoutPage = StringUtils.trim((String) coreConfiguration.getProperties().get("loggedouturl"));
+                logoutPage = StringUtils.defaultString("/libs/composum/platform/home.html");
+            }
+            if (StringUtils.isNotBlank(logoutPage)) {
+                response.sendRedirect(logoutPage);
+                LOG.debug("Redirected to loggedout page '{}'", logoutPage);
                 return true;
             }
             return false;
@@ -219,7 +219,9 @@ public final class KeycloakAuthenticationFilterPlugin implements PlatformAccessF
         }
 
         if (!facade.isEnded()) {
-            response.sendError(403);
+            LOG.warn("Unexpected: facade has not ended at {} on {}", outcome,
+                    request.getRequestURI() + "?" + request.getQueryString());
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return true;
         }
         return false;

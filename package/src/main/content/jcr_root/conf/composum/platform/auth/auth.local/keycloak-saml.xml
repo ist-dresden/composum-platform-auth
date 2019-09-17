@@ -1,6 +1,6 @@
 <keycloak-saml-adapter xmlns="urn:keycloak:saml:adapter"
-                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                       xsi:schemaLocation="urn:keycloak:saml:adapter https://www.keycloak.org/schema/keycloak_saml_adapter_1_9.xsd">
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:keycloak:saml:adapter https://www.keycloak.org/schema/keycloak_saml_adapter_1_9.xsd">
     <!-- FIXME hps Setting that probably need to be changed in the end
         compare https://www.keycloak.org/docs/latest/securing_apps/index.html#saml-2 :
         sslPolicy , turnOffChangeSessionIdOnLogin , element Keys, signaturesRequired .
@@ -10,26 +10,28 @@
         sslPolicy, turnOffChangeSessionIdOnLogin, autodetectBearerOnly, PrincipalNameMapping -->
 
     <SP entityID="localhost9090"
-        sslPolicy="NONE"
-        turnOffChangeSessionIdOnLogin="false"
-        autodetectBearerOnly="true"
-        logoutPage="/system/sling/logout">
+            sslPolicy="NONE"
+            turnOffChangeSessionIdOnLogin="false"
+            autodetectBearerOnly="true"
+            logoutPage="">
         <PrincipalNameMapping policy="FROM_ATTRIBUTE" attribute="email"/>
         <IDP entityID="idp"
-             signaturesRequired="true">
+                signaturesRequired="true">
             <SingleSignOnService signRequest="false"
-                                 validateResponseSignature="true"
-                                 validateAssertionSignature="false"
-                                 requestBinding="POST"
-                                 bindingUrl="https://auth.ist-software.com/auth/realms/composum-demo/protocol/saml"/>
+                    validateResponseSignature="true"
+                    validateAssertionSignature="false"
+                    requestBinding="POST"
+                    bindingUrl="https://auth.ist-software.com/auth/realms/composum-demo/protocol/saml"
+                    assertionConsumerServiceUrl="http://localhost:9090/saml"
+            />
             <SingleLogoutService signRequest="false"
-                                 signResponse="false"
-                                 validateRequestSignature="true"
-                                 validateResponseSignature="true"
-                                 requestBinding="POST"
-                                 responseBinding="POST"
-                                 postBindingUrl="https://auth.ist-software.com/auth/realms/composum-demo/protocol/saml"
-                                 redirectBindingUrl="https://auth.ist-software.com/auth/realms/composum-demo/protocol/saml"/>
+                    signResponse="false"
+                    validateRequestSignature="true"
+                    validateResponseSignature="true"
+                    requestBinding="POST"
+                    responseBinding="POST"
+                    postBindingUrl="https://auth.ist-software.com/auth/realms/composum-demo/protocol/saml"
+                    redirectBindingUrl="https://auth.ist-software.com/auth/realms/composum-demo/protocol/saml"/>
             <Keys>
                 <Key signing="true">
                     <CertificatePem>
