@@ -7,6 +7,9 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.auth.Authenticator;
+import org.apache.sling.api.wrappers.SlingHttpServletResponseWrapper;
+import org.apache.sling.auth.core.AuthUtil;
 import org.keycloak.adapters.saml.SamlAuthenticator;
 import org.keycloak.adapters.saml.SamlConfigResolver;
 import org.keycloak.adapters.saml.SamlDeployment;
@@ -30,6 +33,8 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
@@ -40,8 +45,6 @@ import javax.annotation.Nonnull;
 import javax.servlet.FilterChain;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -75,6 +78,9 @@ public final class KeycloakAuthenticationFilterPlugin implements PlatformAccessF
 
     @Reference
     protected SamlConfigResolver samlConfigResolver;
+
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.DYNAMIC)
+    private volatile Authenticator authenticator;
 
     protected volatile Config config;
     protected SessionIdMapper idMapper;
@@ -113,6 +119,7 @@ public final class KeycloakAuthenticationFilterPlugin implements PlatformAccessF
             throws ServletException, IOException {
         boolean isEndpoint = request.getRequestURI().substring(request.getContextPath().length()).endsWith("/saml");
         if (isEndpoint) {
+            request.getRequestProgressTracker().log("SAML request recognized");
             ServletHttpFacade facade = new ServletHttpFacade(request, response);
             SamlDeployment deployment = deploymentContext.resolveDeployment(facade);
             FilterSamlSessionStore tokenStore = new FilterSamlSessionStore(request, facade, 100000, idMapper);
@@ -130,13 +137,16 @@ public final class KeycloakAuthenticationFilterPlugin implements PlatformAccessF
             };
             return doAuthenticate(request, response, deployment, facade, tokenStore, authenticator);
         } else if ("true".equals(request.getParameter("GLO"))) {
+            request.getRequestProgressTracker().log("GLOBAL LOGOUT of {0}", request.getUserPrincipal());
             LOG.info("GLOBAL LOGOUT of {}", request.getUserPrincipal());
+            // authenticatorLogout(request, response);
             triggerAuthentication(request, response, chain); // reads the GLO parameter and acts accordingly.
-            logout(request);
+            logout(request, response);
             return true;
         } else if ("true".equals(request.getParameter("locallogout"))) { // FIXME remove when debugging done
+            request.getRequestProgressTracker().log("local logout of {0}", request.getUserPrincipal());
             LOG.debug("Local logout for testing purposes");
-            logout(request);
+            logout(request, response);
         }
         return false;
     }
@@ -172,10 +182,7 @@ public final class KeycloakAuthenticationFilterPlugin implements PlatformAccessF
         AuthOutcome outcome = authenticator.authenticate();
         if (outcome == AuthOutcome.AUTHENTICATED) {
             LOG.debug("AUTHENTICATED");
-            if (facade.isEnded()) {
-                return true;
-            }
-            return false;
+            return facade.isEnded();
         }
         if (outcome == AuthOutcome.LOGGED_OUT) {
             tokenStore.logoutAccount();
@@ -218,7 +225,8 @@ public final class KeycloakAuthenticationFilterPlugin implements PlatformAccessF
         return false;
     }
 
-    protected void logout(HttpServletRequest request) throws ServletException {
+    protected void logout(SlingHttpServletRequest request, SlingHttpServletResponse response) throws ServletException {
+        logoutAuthenticator(request, response);
         HttpSession session = request.getSession(false);
         if (session != null) {
             idMapper.removeSession(session.getId());
@@ -228,30 +236,33 @@ public final class KeycloakAuthenticationFilterPlugin implements PlatformAccessF
     }
 
     /**
-     * Saves exceptions occuring in the wrapped chain.
+     * Logout from authentcator to clear cookies such as the annoying Form Authentication cookie (form.auth
+     * .name/sling.formauth) that sometimes is left behind and will us immediately log in again.
+     * @see org.apache.sling.auth.core.impl.SlingAuthenticator#logout(HttpServletRequest, HttpServletResponse)
      */
-    protected static class ExceptionSavingFilterChain implements FilterChain {
+    protected void logoutAuthenticator(SlingHttpServletRequest request, SlingHttpServletResponse response) {
 
-        private final FilterChain wrappedChain;
+        SlingHttpServletResponseWrapper wrappedResponse = new SlingHttpServletResponseWrapper(response) {
+            @Override
+            public void sendRedirect(String location) throws IOException {
+                // empty - we don't want any redirects from that.
+            }
+        };
 
-        /**
-         * The exception that occured during execution of {@link #doFilter(ServletRequest, ServletResponse)} of wrappedChain.
-         */
-        protected Exception exception;
-
-        public ExceptionSavingFilterChain(FilterChain wrappedChain) {
-            this.wrappedChain = wrappedChain;
-        }
-
-        @Override
-        public void doFilter(ServletRequest request, ServletResponse response) throws IOException, ServletException {
+        final Authenticator authenticator = this.authenticator;
+        if (authenticator != null) {
             try {
-                wrappedChain.doFilter(request, response);
-            } catch (IOException | ServletException | RuntimeException e) {
-                this.exception = e;
-                throw e;
+                AuthUtil.setLoginResourceAttribute(request, null);
+                authenticator.logout(request, wrappedResponse);
+                return;
+            } catch (IllegalStateException ise) {
+                LOG.error("service: Response already committed, cannot logout: {}", ise);
+                LOG.debug(ise.toString(), ise);
+                return;
             }
         }
+
+        LOG.error("service: Authenticator service missing, cannot logout from authenticator");
     }
 
     static void debug(String calllocation, HttpServletRequest request, Logger log) {
