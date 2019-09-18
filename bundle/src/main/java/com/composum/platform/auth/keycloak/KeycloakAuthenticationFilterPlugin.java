@@ -268,7 +268,7 @@ public final class KeycloakAuthenticationFilterPlugin implements PlatformAccessF
     }
 
     static void debug(String calllocation, HttpServletRequest request, Logger log) {
-        if (!log.isInfoEnabled()) return;
+        if (!log.isDebugEnabled()) { return; }
 
         StringBuilder buf = new StringBuilder();
         try {
@@ -315,7 +315,9 @@ public final class KeycloakAuthenticationFilterPlugin implements PlatformAccessF
         } catch (Exception e) {
             log.error("debug", e);
         }
-        if (buf.length() > 0) log.info("Session info at {} for {}\n{}", calllocation, request.getRequestURI(), buf);
+        if (buf.length() > 0) {
+            log.debug("Session info at {} for {}\n{}", calllocation, request.getRequestURI(), buf);
+        }
     }
 
 }

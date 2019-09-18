@@ -94,20 +94,20 @@ public class KeycloakAuthenticationHandler extends DefaultAuthenticationFeedback
 
     @Override
     public AuthenticationInfo extractCredentials(HttpServletRequest request, HttpServletResponse response) {
-        LOG.info("extractCredentials {}", request.getRequestURI());
+        LOG.debug("extractCredentials {}", request.getRequestURI());
         AuthenticationInfo result = null;
         SamlSession samlSession = getAccount(request);
         if (samlSession != null) {
-            LOG.info("Found SamlSession");
+            LOG.debug("Found SamlSession");
             debug("extractCredentials found SamlSession", request, LOG);
             KeycloakCredentials credentials = new KeycloakCredentials(samlSession);
             try {
                 if (createOrUpdateUser(credentials, request)) {
-                    LOG.info("Credentials created: {}", credentials);
+                    LOG.debug("Credentials created: {}", credentials);
                     result = new AuthenticationInfo(KEYCLOAK_AUTH, credentials.getUserId());
                     result.put(JcrResourceConstants.AUTHENTICATION_INFO_CREDENTIALS, credentials);
                 } else {
-                    LOG.info("Could get user for {}", credentials.getUserId());
+                    LOG.debug("Could get user for {}", credentials.getUserId());
                 }
             } catch (RepositoryException | LoginException | PersistenceException e) {
                 LOG.error("Trouble creating/getting user " + credentials.getUserId(), e);
