@@ -123,7 +123,6 @@
                                 <include>
                                     .*/org.apache.sling.serviceusermapping.impl.ServiceUserMapperImpl.amended-platformauth.config
                                 </include>
-                                <include>.*/com.composum.sling.core.CoreConfigImpl.config</include>
                             </includes>
                         </filter>
                     </filters>
