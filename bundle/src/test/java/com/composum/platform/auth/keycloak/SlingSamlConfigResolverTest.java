@@ -1,13 +1,14 @@
 package com.composum.platform.auth.keycloak;
 
+import org.junit.Test;
 import org.keycloak.adapters.saml.SamlDeployment;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 class SlingSamlConfigResolverTest {
 
-    @org.junit.jupiter.api.Test
+    @Test
     void resolve() {
         SamlDeployment deployment = new SlingSamlConfigResolver().resolve(null);
         assertNotNull(deployment);
