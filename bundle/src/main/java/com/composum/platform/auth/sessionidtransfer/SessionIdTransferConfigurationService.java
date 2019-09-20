@@ -28,7 +28,7 @@ public interface SessionIdTransferConfigurationService {
         String sessionCookieName() default "JSESSIONID";
 
         @AttributeDefinition(name = "httpOnly", description =
-                "Session Cooky httpOnly (true by default).")
+                "Session Cookie httpOnly (true by default).")
         boolean httpOnly() default true;
 
         @AttributeDefinition(name = "Session Domain", description =
@@ -40,9 +40,14 @@ public interface SessionIdTransferConfigurationService {
                 "If this property is set, then it is used as the path for the session cookie. Default is context path.")
         String sessionPath() default "";
 
+        @AttributeDefinition(name = "Session Cookie secure", description =
+                "Session Cookie secure (false by default).")
+        boolean sessionCookieSecure() default false;
+
         @AttributeDefinition(name = "tokenTimeout", description =
-                "The validity time for tokens that transfer the session to another virtual host.")
-        int tokenTimeout() default 5;
+                "The validity time in milliseconds for tokens that transfer the session to another virtual host.")
+        int tokenTimeoutMillis() default 300000;
+        // FIXME(hps,19.09.19) change default value to 5000 (seconds)
 
     }
 }

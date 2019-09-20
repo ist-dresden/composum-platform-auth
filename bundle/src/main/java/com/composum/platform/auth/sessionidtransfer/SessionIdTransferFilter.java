@@ -38,9 +38,10 @@ import java.io.IOException;
         property = {
                 "sling.filter.scope=REQUEST",
                 Constants.SERVICE_DESCRIPTION + "=Composum Platform Auth SessionId Transfer",
-                Constants.SERVICE_RANKING + ":Integer=9",
+                Constants.SERVICE_RANKING + ":Integer=9900",
         },
-        configurationPolicy = ConfigurationPolicy.REQUIRE
+        configurationPolicy = ConfigurationPolicy.REQUIRE,
+        immediate = true
 )
 @Designate(ocd = SessionIdTransferConfigurationService.SessionIdTransferConfiguration.class)
 public class SessionIdTransferFilter implements Filter, SessionIdTransferConfigurationService {
@@ -64,15 +65,26 @@ public class SessionIdTransferFilter implements Filter, SessionIdTransferConfigu
             SessionIdTransferService.TransferInfo transferinfo = sessionIdTransferService.retrieveTransferInfo(token);
             if (transferinfo != null) {
 
+                if (!StringUtils.equals(transferinfo.expectedHost, request.getServerName())) {
+                    LOG.error("Received session transfer for {} at {}", transferinfo.expectedHost,
+                            request.getServerName());
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                            "Received session transfer for " + transferinfo.expectedHost + " at " + request.getServerName());
+                    return;
+                }
+
                 LOG.info("Redirecting to {}", transferinfo.url);
                 HttpSession oldSession = request.getSession(false);
                 String oldSessionId = oldSession != null ? oldSession.getId() : null;
-                if (oldSessionId != null && !oldSessionId.equals(transferinfo.sessionId)) {
-                    LOG.info("Invalidating old session");
+                if (oldSessionId != null && StringUtils.indexOfDifference(oldSessionId, transferinfo.sessionId) < 30) {
+                    // direct comparison would be wrong since these have a different suffix
+                    LOG.info("Invalidating old session necessary");
                     oldSession.invalidate();
                 }
                 if (!transferinfo.sessionId.equals(oldSessionId)) {
                     setSessionCookie(response, transferinfo.sessionId);
+                } else {
+                    LOG.info("No need to change session id.");
                 }
                 response.sendRedirect(transferinfo.url);
 
@@ -86,17 +98,13 @@ public class SessionIdTransferFilter implements Filter, SessionIdTransferConfigu
     }
 
     protected void setSessionCookie(HttpServletResponse response, String sessionId) {
-        LOG.info("Setting new session cookie");
         SessionIdTransferConfiguration cfg = this.configuration;
         Cookie sessionCookie = new Cookie(cfg.sessionCookieName(), sessionId);
         if (StringUtils.isNotBlank(cfg.sessionPath())) { sessionCookie.setPath(cfg.sessionPath()); }
         if (StringUtils.isNotBlank(cfg.sessionDomain())) { sessionCookie.setDomain(cfg.sessionDomain());}
+        sessionCookie.setHttpOnly(cfg.httpOnly());
+        sessionCookie.setSecure(cfg.sessionCookieSecure());
         response.addCookie(sessionCookie);
-        
-        // FIXME(hps,19.09.19) remove - for testing purposes only.
-        Cookie otherCookie = new Cookie("JSESSIONID-NEW", sessionId);
-        otherCookie.setMaxAge(-300);
-        response.addCookie(otherCookie);
     }
 
     @Override
