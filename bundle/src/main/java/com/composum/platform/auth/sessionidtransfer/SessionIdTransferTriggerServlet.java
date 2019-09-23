@@ -17,6 +17,7 @@ import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
@@ -67,7 +68,12 @@ public class SessionIdTransferTriggerServlet extends SlingSafeMethodsServlet {
     protected void doGet(@NotNull SlingHttpServletRequest request, @NotNull SlingHttpServletResponse response) throws ServletException, IOException {
         SessionIdTransferConfigurationService.SessionIdTransferConfiguration cfg = configurationService.getConfiguration();
         String token = request.getParameter(PARAM_TOKEN);
-        if (cfg != null && cfg.enabled() && StringUtils.isNotBlank(token)) {
+        if (cfg == null || !cfg.enabled()) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Session transfer not enabled.");
+        } else if (StringUtils.isBlank(token)) {
+            LOG.warn("Token parameter missing.");
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Token parameter is missing.");
+        } else {
             String finalUrl = transferService.retrieveFinalUrl(token);
             if (finalUrl != null) {
                 String redirectUrl = null;
@@ -79,19 +85,25 @@ public class SessionIdTransferTriggerServlet extends SlingSafeMethodsServlet {
                 }
                 if (StringUtils.isNotBlank(redirectUrl)) {
                     LOG.info("Redirecting to callback servlet for {}", finalUrl);
+                    destroySession(request);
                     response.sendRedirect(redirectUrl);
                 }
             } else { // invalid token or timed out. Nothing sensible we can do here...
                 LOG.warn("Could not retrieve transferinfo for token {}", token);
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Session transfer token timed out or invalid.");
             }
-        } else {
-            if (StringUtils.isBlank(token)) {
-                LOG.warn("Token parameter missing.");
-            } else {
-                LOG.warn("Received request though not enabled. Why?");
-            }
-            super.doGet(request, response);
+        }
+    }
+
+    /**
+     * If there is a session we teminate it, since it's going to be replaced, anyway and might result in cookie
+     * duplicates. As a safety precaution, we do this only for anonymous sessions.
+     */
+    protected void destroySession(SlingHttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        if (session != null && (session.isNew() || "anonymous".equals(request.getRemoteUser()))) {
+            LOG.info("Terminating soon to be obsolete session {}", session.getId());
+            session.invalidate();
         }
     }
 

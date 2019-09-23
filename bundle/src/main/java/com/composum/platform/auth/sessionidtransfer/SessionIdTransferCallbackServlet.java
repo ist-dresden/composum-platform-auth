@@ -60,7 +60,12 @@ public class SessionIdTransferCallbackServlet extends SlingSafeMethodsServlet {
     protected void doGet(@NotNull SlingHttpServletRequest request, @NotNull SlingHttpServletResponse response) throws ServletException, IOException {
         SessionIdTransferConfigurationService.SessionIdTransferConfiguration cfg = configurationService.getConfiguration();
         String token = request.getParameter(PARAM_TOKEN);
-        if (cfg != null && cfg.enabled() && StringUtils.isNotBlank(token)) {
+        if (cfg == null || !cfg.enabled()) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Session transfer not enabled.");
+        } else if (StringUtils.isBlank(token)) {
+            LOG.warn("Token parameter missing.");
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Token parameter is missing.");
+        } else {
             SessionIdTransferService.SessionTransferInfo transferinfo = transferService.retrieveSessionTransferInfo(token);
             if (transferinfo != null) {
 
@@ -90,20 +95,13 @@ public class SessionIdTransferCallbackServlet extends SlingSafeMethodsServlet {
                 LOG.warn("Could not retrieve transferinfo for token {}", token);
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Session transfer token timed out or invalid.");
             }
-        } else {
-            if (StringUtils.isBlank(token)) {
-                LOG.warn("Token parameter missing.");
-            } else {
-                LOG.warn("Received request though not enabled. Why?");
-            }
-            super.doGet(request, response);
         }
     }
 
     protected void setSessionCookie(HttpServletResponse response, String sessionId) {
         SessionIdTransferConfigurationService.SessionIdTransferConfiguration cfg = configurationService.getConfiguration();
         Cookie sessionCookie = new Cookie(cfg.sessionCookieName(), sessionId);
-        if (StringUtils.isNotBlank(cfg.sessionPath())) { sessionCookie.setPath(cfg.sessionPath()); }
+        sessionCookie.setPath(StringUtils.defaultIfBlank(cfg.sessionPath(), "/"));
         if (StringUtils.isNotBlank(cfg.sessionDomain())) { sessionCookie.setDomain(cfg.sessionDomain());}
         sessionCookie.setHttpOnly(cfg.httpOnly());
         sessionCookie.setSecure(cfg.sessionCookieSecure());
