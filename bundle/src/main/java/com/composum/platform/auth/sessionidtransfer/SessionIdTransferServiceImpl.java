@@ -1,12 +1,14 @@
 package com.composum.platform.auth.sessionidtransfer;
 
-import org.apache.commons.lang3.RandomStringUtils;
+import com.composum.platform.commons.storage.TokenizedShorttermStoreService;
 import org.apache.commons.lang3.StringUtils;
 import org.osgi.framework.Constants;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceCardinality;
-import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.metatype.annotations.Designate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,12 +18,6 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.SecureRandom;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentLinkedDeque;
 
 /**
  * Implementation of {@link SessionIdTransferService}.
@@ -29,37 +25,67 @@ import java.util.concurrent.ConcurrentLinkedDeque;
  * @see SessionIdTransferService
  */
 @Component(
-        service = {SessionIdTransferService.class},
+        service = {SessionIdTransferService.class, SessionIdTransferConfigurationService.class},
         property = {
                 Constants.SERVICE_DESCRIPTION + "=Composum Platform Auth Session Transfer Service"
         },
         immediate = true
 )
-public class SessionIdTransferServiceImpl implements SessionIdTransferService {
+@Designate(ocd = SessionIdTransferConfigurationService.SessionIdTransferConfiguration.class)
+public class SessionIdTransferServiceImpl implements SessionIdTransferService, SessionIdTransferConfigurationService {
 
     private static final Logger LOG = LoggerFactory.getLogger(SessionIdTransferServiceImpl.class);
 
-    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.DYNAMIC)
-    protected volatile SessionIdTransferConfigurationService configurationService;
+    protected volatile SessionIdTransferConfiguration configuration;
 
-    /** Maps tokens to {@link com.composum.platform.auth.sessionidtransfer.SessionIdTransferService.TransferInfo}. */
-    protected final Map<String, TransferInfo> transferInfoMap = Collections.synchronizedMap(new HashMap<>());
+    @Reference
+    protected TokenizedShorttermStoreService storeService;
 
-    /** Queue for tokens in the order of their creation time - for cleanup. */
-    protected final Deque<String> tokenToDeleteQueue = new ConcurrentLinkedDeque<>();
+    @Nullable
+    @Override
+    public String sessionTransferTriggerUrl(@Nullable String url, @Nonnull HttpServletRequest request) throws URISyntaxException {
+        SessionIdTransferConfiguration cfg = getConfiguration();
+        if (cfg == null || !cfg.enabled()) { return null; }
+        String finalUrl = url;
+        if (StringUtils.isBlank(url)) {
+            StringBuffer buf = request.getRequestURL();
+            if (StringUtils.isNotBlank(request.getQueryString())) {
+                buf.append('?').append(request.getQueryString());
+            }
+            finalUrl = buf.toString();
+        }
+        String token = storeService.checkin(finalUrl, configuration.triggerTokenTimeoutMillis());
+        URI authUrl = new URI(cfg.authenticationHostUrl());
+        URI redirUri = new URI(authUrl.getScheme(), authUrl.getUserInfo(), authUrl.getHost(), authUrl.getPort(),
+                SessionIdTransferTriggerServlet.PATH, SessionIdTransferTriggerServlet.PARAM_TOKEN + "=" + token, null);
+        return redirUri.toASCIIString();
+    }
 
-    protected final SecureRandom tokenGenerator = new SecureRandom();
+    @Nullable
+    @Override
+    public String retrieveFinalUrl(@Nullable String token) {
+        String url = null;
+        SessionIdTransferConfiguration cfg = getConfiguration();
+        if (cfg == null || !cfg.enabled()) { return null; }
+        if (StringUtils.isNotBlank(token)) {
+            url = storeService.checkout(token, String.class);
+        }
+        return url;
+    }
 
     @Override
     @Nullable
-    public String redirectUrl(@Nonnull String url, @Nonnull HttpServletRequest request) throws URISyntaxException {
+    public String sessionTransferCallbackUrl(@Nonnull String url, @Nonnull HttpServletRequest request) throws URISyntaxException {
+        SessionIdTransferConfiguration cfg = getConfiguration();
+        if (cfg == null || !cfg.enabled()) { return null; }
         URI uri = new URI(url);
 
         String sessionIdValue = retrieveSessionIdCookieValue(request);
         String expectedHost = StringUtils.defaultIfBlank(uri.getHost(), request.getServerName());
-        String token = registerTransferInfo(new TransferInfo(sessionIdValue, url, expectedHost));
+        String token = registerSessionTransferInfo(new SessionTransferInfo(sessionIdValue, url, expectedHost));
 
-        URI redirURI = new URI(uri.getScheme(), null, uri.getHost(), uri.getPort(), "/", PARAM_SESSIONIDTOKEN + "=" + token,
+        URI redirURI = new URI(uri.getScheme(), null, uri.getHost(), uri.getPort(), SessionIdTransferCallbackServlet.PATH,
+                SessionIdTransferCallbackServlet.PARAM_TOKEN + "=" + token,
                 null);
         return redirURI.toASCIIString();
     }
@@ -67,7 +93,7 @@ public class SessionIdTransferServiceImpl implements SessionIdTransferService {
     /** The session id in the cookie has a different suffix than the actual session id, so we look it up in the cookie. */
     @Nullable
     protected String retrieveSessionIdCookieValue(@Nonnull HttpServletRequest request) {
-        SessionIdTransferConfigurationService.SessionIdTransferConfiguration cfg = configurationService.getConfiguration();
+        SessionIdTransferConfigurationService.SessionIdTransferConfiguration cfg = getConfiguration();
         String sessionIdValue = null;
         for (Cookie cookie : request.getCookies()) {
             if (StringUtils.equals(cfg.sessionCookieName(), cookie.getName())) {
@@ -86,66 +112,45 @@ public class SessionIdTransferServiceImpl implements SessionIdTransferService {
         return sessionIdValue;
     }
 
+    /** Registers a {@link SessionTransferInfo} and returns the token for which it was registered. */
     @Nonnull
-    @Override
-    public String registerTransferInfo(@Nonnull TransferInfo transferInfo) {
-        String token = RandomStringUtils.random(32, 0, 0, true, true, null, tokenGenerator);
-        cleanup();
-        tokenToDeleteQueue.addLast(token);
-        transferInfoMap.put(token, transferInfo);
-        LOG.debug("registerTransferInfo with redirect to {}", transferInfo.url);
+    protected String registerSessionTransferInfo(@Nonnull SessionTransferInfo sessionTransferInfo) {
+        String token = storeService.checkin(sessionTransferInfo, configuration.callbackTokenTimeoutMillis());
+        LOG.debug("registerTransferInfo with redirect to {}", sessionTransferInfo.url);
         // deliberately *not* log token to prevent intrusion if logfile is accessible
         return token;
     }
 
-    protected long getMinCreateTime() {
-        SessionIdTransferConfigurationService cserv = configurationService;
-        SessionIdTransferConfigurationService.SessionIdTransferConfiguration cfg = configurationService != null ? configurationService.getConfiguration() : null;
-        long timeout = cfg != null ? cfg.tokenTimeoutMillis() : 5000;
-        return System.currentTimeMillis() - timeout;
+    @Nullable
+    @Override
+    public SessionTransferInfo retrieveSessionTransferInfo(@Nullable String token) {
+        SessionTransferInfo sessionTransferInfo = null;
+        if (StringUtils.isNotBlank(token)) {
+            sessionTransferInfo = storeService.checkout(token, SessionTransferInfo.class);
+            if (sessionTransferInfo != null) {
+                LOG.info("Found transferinfo for token, redirect to {}", sessionTransferInfo.url);
+            }
+        }
+        return sessionTransferInfo;
     }
 
-    protected void cleanup() {
-        synchronized (tokenToDeleteQueue) {
-            long minCreationTime = getMinCreateTime();
-            String token;
-            TransferInfo transferInfo;
-            token = tokenToDeleteQueue.peekFirst();
-            transferInfo = token != null ? transferInfoMap.get(token) : null;
-            do {
-                token = tokenToDeleteQueue.pollFirst();
-                if (token == null) { return; }
-                transferInfo = token != null ? transferInfoMap.get(token) : null;
-                if (transferInfo != null) {
-                    if (transferInfo.tokenCreationTime > minCreationTime) {
-                        tokenToDeleteQueue.addFirst(token); // put it back since first one isn't timed out yet, stop.
-                        return;
-                    } else { // timed out
-                        transferInfoMap.remove(token);
-                    }
-                }
-            } while (!tokenToDeleteQueue.isEmpty());
-        }
+    // configuration service methods
+
+    @Activate
+    @Modified
+    public void activate(SessionIdTransferConfigurationService.SessionIdTransferConfiguration configuration) {
+        this.configuration = configuration;
+        LOG.info("enabled: " + configuration.enabled());
+    }
+
+    @Deactivate
+    public void deactivate() {
+        configuration = null;
     }
 
     @Nullable
     @Override
-    public TransferInfo retrieveTransferInfo(@Nullable String token) {
-        TransferInfo transferInfo = null;
-        if (StringUtils.isNotBlank(token)) {
-            transferInfo = transferInfoMap.get(token);
-            if (transferInfo != null) {
-                transferInfoMap.remove(token);
-                // tokenToDeleteQueue is automatically cleaned after a while.
-                if (transferInfo.tokenCreationTime < getMinCreateTime()) {
-                    transferInfo = null;
-                    LOG.info("TransferInfo timed out - discarding it.");
-                } else {
-                    LOG.info("Found transferinfo for token, redirect to {}", transferInfo.url);
-                }
-            }
-        }
-        cleanup();
-        return transferInfo;
+    public SessionIdTransferConfiguration getConfiguration() {
+        return configuration;
     }
 }

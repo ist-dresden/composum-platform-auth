@@ -5,7 +5,7 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
 import javax.annotation.Nullable;
 
-/** Service for the configuration of the {@link SessionIdTransferServlet} / {@link SessionIdTransferService}. */
+/** Service for the configuration of the {@link SessionIdTransferCallbackServlet} / {@link SessionIdTransferService}. */
 public interface SessionIdTransferConfigurationService {
 
     /** Retrieves the configuration for the sessionid transfer. */
@@ -44,10 +44,22 @@ public interface SessionIdTransferConfigurationService {
                 "Session Cookie secure (false by default).")
         boolean sessionCookieSecure() default false;
 
-        @AttributeDefinition(name = "tokenTimeout", description =
-                "The validity time in milliseconds for tokens that transfer the session to another virtual host.")
-        int tokenTimeoutMillis() default 300000;
-        // FIXME(hps,19.09.19) change default value to 5000 (seconds)
+        @AttributeDefinition(name = "Authentication host URL", description =
+                "The URL to the host we use as primary authentication host - that is, where the Keycloak (or other) SSO goes to.")
+        String authenticationHostUrl();
 
+        @AttributeDefinition(name = "callbackTokenTimeoutMillis", description =
+                "The validity time in milliseconds for the token that transfers the session to another virtual host." +
+                        "This can be relatively small (a few seconds) the user is immediately redirected by the " +
+                        "SessionIdTransferTriggerServlet  to the SessionIdTransferCallbackServlet.")
+        int callbackTokenTimeoutMillis() default 300000;
+        // FIXME(hps,19.09.19) change default value to 5000 (seconds) when done debugging
+
+        @AttributeDefinition(name = "triggerTokenTimeoutMillis", description =
+                "The validity time in milliseconds for tokens that transfer the URL the user wants to access to " +
+                        "another virtual host, to start transporting the session-id to the current host. " +
+                        "This needs to be large enough so that the user can login into the primary authentication " +
+                        "host, possibly via Keycloak or different SSO mechanisms.")
+        int triggerTokenTimeoutMillis() default 300000; // 5 minutes time for login
     }
 }
