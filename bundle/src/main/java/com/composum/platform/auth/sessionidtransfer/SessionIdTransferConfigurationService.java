@@ -45,15 +45,15 @@ public interface SessionIdTransferConfigurationService {
         boolean sessionCookieSecure() default false;
 
         @AttributeDefinition(name = "Authentication host URL", description =
-                "The URL to the host we use as primary authentication host - that is, where the Keycloak (or other) SSO goes to.")
+                "The URL to the host we use as primary authentication host - that is, where the Keycloak (or other) " +
+                        "SSO is configured to redirect to after authentication.")
         String authenticationHostUrl();
 
         @AttributeDefinition(name = "callbackTokenTimeoutMillis", description =
                 "The validity time in milliseconds for the token that transfers the session to another virtual host." +
                         "This can be relatively small (a few seconds) the user is immediately redirected by the " +
                         "SessionIdTransferTriggerServlet  to the SessionIdTransferCallbackServlet.")
-        int callbackTokenTimeoutMillis() default 300000;
-        // FIXME(hps,19.09.19) change default value to 5000 (seconds) when done debugging
+        int callbackTokenTimeoutMillis() default 5000;
 
         @AttributeDefinition(name = "triggerTokenTimeoutMillis", description =
                 "The validity time in milliseconds for tokens that transfer the URL the user wants to access to " +

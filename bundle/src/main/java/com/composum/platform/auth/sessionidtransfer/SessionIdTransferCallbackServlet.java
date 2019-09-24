@@ -82,7 +82,7 @@ public class SessionIdTransferCallbackServlet extends SlingSafeMethodsServlet {
                 if (oldSessionId != null && StringUtils.indexOfDifference(oldSessionId, transferinfo.sessionId) < 32) {
                     // direct comparison would be wrong since these have a different suffix
                     oldSession.invalidate();
-                    LOG.info("Invalidating old session was necessary - {} for {}", oldSessionId, request.getRequestURL());
+                    LOG.debug("Invalidating old session was necessary - {} for {}", oldSessionId, request.getRequestURL());
                 }
                 if (!transferinfo.sessionId.equals(oldSessionId)) {
                     setSessionCookie(response, transferinfo.sessionId);
