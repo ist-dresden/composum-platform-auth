@@ -163,7 +163,6 @@ public final class KeycloakAuthenticationFilterPlugin implements PlatformAccessF
         if (sessionIdTransferService.authenticationShouldRedirectToPrimaryAuthenticationHost(request)) {
             String redirUrl = sessionIdTransferService.sessionTransferTriggerUrl(request);
             if (StringUtils.isNotBlank(redirUrl)) {
-                destroyAnonymousSession(request, response);
                 response.sendRedirect(redirUrl);
             } else { // impossible
                 LOG.error("Bug: session transfer enabled, but no URL for {}", request.getRequestURL());
@@ -172,21 +171,6 @@ public final class KeycloakAuthenticationFilterPlugin implements PlatformAccessF
             return true;
         } else {
             return triggerAuthenticationInternal(request, response, chain);
-        }
-    }
-
-    /**
-     * If there is a session we teminate it, since it's going to be replaced, anyway and might result in cookie
-     * duplicates. As a safety precaution, we do this only for anonymous sessions.
-     */
-    protected void destroyAnonymousSession(SlingHttpServletRequest request, SlingHttpServletResponse response) {
-        HttpSession session = request.getSession(false);
-        if (session != null) {
-            boolean isNewSession = session.isNew();
-            if (isNewSession || "anonymous".equals(request.getRemoteUser())) {
-                LOG.info("Terminating soon to be obsolete session {}", session.getId());
-                session.invalidate();
-            }
         }
     }
 
