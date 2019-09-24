@@ -19,6 +19,8 @@ import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * Implementation of {@link SessionIdTransferService}.
  *
@@ -36,10 +38,14 @@ public class SessionIdTransferServiceImpl implements SessionIdTransferService, S
 
     private static final Logger LOG = LoggerFactory.getLogger(SessionIdTransferServiceImpl.class);
 
+    @Nullable
     protected volatile SessionIdTransferConfiguration configuration;
+    @Nullable
+    protected volatile URI authenticationHostUrl;
 
     @Reference
     protected TokenizedShorttermStoreService storeService;
+
 
     @Nullable
     @Override
@@ -54,11 +60,22 @@ public class SessionIdTransferServiceImpl implements SessionIdTransferService, S
             }
             finalUrl = buf.toString();
         }
-        String token = storeService.checkin(finalUrl, configuration.triggerTokenTimeoutMillis());
+        String token = storeService.checkin(finalUrl, cfg.triggerTokenTimeoutMillis());
         URI authUrl = new URI(cfg.authenticationHostUrl());
         URI redirUri = new URI(authUrl.getScheme(), authUrl.getUserInfo(), authUrl.getHost(), authUrl.getPort(),
                 SessionIdTransferTriggerServlet.PATH, SessionIdTransferTriggerServlet.PARAM_TOKEN + "=" + token, null);
         return redirUri.toASCIIString();
+    }
+
+    @Nullable
+    @Override
+    public String sessionTransferTriggerUrl(@Nonnull HttpServletRequest request) {
+        try {
+            return sessionTransferTriggerUrl(null, request);
+        } catch (URISyntaxException e) {
+            LOG.error("Impossible - cannot parse current requests URL??? " + e, e);
+            throw new IllegalArgumentException(e);
+        }
     }
 
     @Nullable
@@ -80,9 +97,12 @@ public class SessionIdTransferServiceImpl implements SessionIdTransferService, S
         if (cfg == null || !cfg.enabled()) { return null; }
         URI uri = new URI(url);
 
-        String sessionIdValue = retrieveSessionIdCookieValue(request);
+        String sessionIdValue = requireNonNull(retrieveSessionIdCookieValue(request));
         String expectedHost = StringUtils.defaultIfBlank(uri.getHost(), request.getServerName());
-        String token = registerSessionTransferInfo(new SessionTransferInfo(sessionIdValue, url, expectedHost));
+        SessionTransferInfo sessionTransferInfo = new SessionTransferInfo(sessionIdValue, url, expectedHost);
+        String token = storeService.checkin(sessionTransferInfo, cfg.callbackTokenTimeoutMillis());
+        LOG.debug("registerTransferInfo with redirect to {}", sessionTransferInfo.url);
+        // deliberately *not* log token to prevent intrusion if logfile is accessible
 
         URI redirURI = new URI(uri.getScheme(), null, uri.getHost(), uri.getPort(), SessionIdTransferCallbackServlet.PATH,
                 SessionIdTransferCallbackServlet.PARAM_TOKEN + "=" + token,
@@ -94,6 +114,7 @@ public class SessionIdTransferServiceImpl implements SessionIdTransferService, S
     @Nullable
     protected String retrieveSessionIdCookieValue(@Nonnull HttpServletRequest request) {
         SessionIdTransferConfigurationService.SessionIdTransferConfiguration cfg = getConfiguration();
+        if (cfg == null || !cfg.enabled()) { return null; }
         String sessionIdValue = null;
         for (Cookie cookie : request.getCookies()) {
             if (StringUtils.equals(cfg.sessionCookieName(), cookie.getName())) {
@@ -112,15 +133,6 @@ public class SessionIdTransferServiceImpl implements SessionIdTransferService, S
         return sessionIdValue;
     }
 
-    /** Registers a {@link SessionTransferInfo} and returns the token for which it was registered. */
-    @Nonnull
-    protected String registerSessionTransferInfo(@Nonnull SessionTransferInfo sessionTransferInfo) {
-        String token = storeService.checkin(sessionTransferInfo, configuration.callbackTokenTimeoutMillis());
-        LOG.debug("registerTransferInfo with redirect to {}", sessionTransferInfo.url);
-        // deliberately *not* log token to prevent intrusion if logfile is accessible
-        return token;
-    }
-
     @Nullable
     @Override
     public SessionTransferInfo retrieveSessionTransferInfo(@Nullable String token) {
@@ -134,18 +146,41 @@ public class SessionIdTransferServiceImpl implements SessionIdTransferService, S
         return sessionTransferInfo;
     }
 
+    @Override
+    public boolean authenticationShouldRedirectToPrimaryAuthenticationHost(@Nonnull HttpServletRequest request) {
+        SessionIdTransferConfigurationService.SessionIdTransferConfiguration cfg = getConfiguration();
+        URI authUrl = this.authenticationHostUrl;
+        if (cfg == null || !cfg.enabled() || authUrl == null) { return false; }
+        URI requestUrl;
+        try {
+            requestUrl = new URI(request.getRequestURL().toString());
+        } catch (URISyntaxException e) {
+            LOG.error("Impossible: cannot parse request URL " + request.getRequestURL(), e);
+            return false;
+        }
+
+        boolean onAuthenticationHost = StringUtils.equals(authUrl.getHost(), requestUrl.getHost())
+                && authUrl.getPort() == requestUrl.getPort()
+                && StringUtils.equals(authUrl.getScheme(), requestUrl.getScheme());
+        LOG.debug("should redirect: {} vs {} -> {}", requestUrl, authUrl, onAuthenticationHost);
+        return !onAuthenticationHost;
+    }
+
     // configuration service methods
 
     @Activate
     @Modified
-    public void activate(SessionIdTransferConfigurationService.SessionIdTransferConfiguration configuration) {
-        this.configuration = configuration;
-        LOG.info("enabled: " + configuration.enabled());
+    public void activate(SessionIdTransferConfigurationService.SessionIdTransferConfiguration theConfiguration) throws URISyntaxException {
+        this.configuration = theConfiguration;
+        this.authenticationHostUrl = null;
+        LOG.info("enabled: {}", theConfiguration.enabled());
+        this.authenticationHostUrl = new URI(theConfiguration.authenticationHostUrl());
     }
 
     @Deactivate
     public void deactivate() {
         configuration = null;
+        authenticationHostUrl = null;
     }
 
     @Nullable

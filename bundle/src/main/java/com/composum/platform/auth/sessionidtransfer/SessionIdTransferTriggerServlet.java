@@ -85,25 +85,12 @@ public class SessionIdTransferTriggerServlet extends SlingSafeMethodsServlet {
                 }
                 if (StringUtils.isNotBlank(redirectUrl)) {
                     LOG.info("Redirecting to callback servlet for {}", finalUrl);
-                    destroySession(request);
                     response.sendRedirect(redirectUrl);
                 }
             } else { // invalid token or timed out. Nothing sensible we can do here...
                 LOG.warn("Could not retrieve transferinfo for token {}", token);
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Session transfer token timed out or invalid.");
             }
-        }
-    }
-
-    /**
-     * If there is a session we teminate it, since it's going to be replaced, anyway and might result in cookie
-     * duplicates. As a safety precaution, we do this only for anonymous sessions.
-     */
-    protected void destroySession(SlingHttpServletRequest request) {
-        HttpSession session = request.getSession(false);
-        if (session != null && (session.isNew() || "anonymous".equals(request.getRemoteUser()))) {
-            LOG.info("Terminating soon to be obsolete session {}", session.getId());
-            session.invalidate();
         }
     }
 

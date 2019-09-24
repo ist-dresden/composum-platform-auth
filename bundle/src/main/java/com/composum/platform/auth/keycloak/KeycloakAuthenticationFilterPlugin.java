@@ -1,5 +1,6 @@
 package com.composum.platform.auth.keycloak;
 
+import com.composum.platform.auth.sessionidtransfer.SessionIdTransferService;
 import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.platform.security.PlatformAccessFilterAuthPlugin;
 import org.apache.commons.lang3.StringUtils;
@@ -45,7 +46,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.servlet.FilterChain;
-import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -83,6 +83,9 @@ public final class KeycloakAuthenticationFilterPlugin implements PlatformAccessF
 
     @Reference
     protected CoreConfiguration coreConfiguration;
+
+    @Reference
+    protected SessionIdTransferService sessionIdTransferService;
 
     @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.DYNAMIC)
     private volatile Authenticator authenticator;
@@ -123,7 +126,7 @@ public final class KeycloakAuthenticationFilterPlugin implements PlatformAccessF
                                   FilterChain chain)
             throws ServletException, IOException {
         boolean isEndpoint = request.getRequestURI().substring(request.getContextPath().length()).endsWith("/saml");
-        if (isEndpoint) {
+        if (isEndpoint) { // receive response from keycloak
             request.getRequestProgressTracker().log("SAML request recognized");
             ServletHttpFacade facade = new ServletHttpFacade(request, response);
             SamlDeployment deployment = deploymentContext.resolveDeployment(facade);
@@ -144,7 +147,7 @@ public final class KeycloakAuthenticationFilterPlugin implements PlatformAccessF
         } else if ("true".equals(request.getParameter("GLO"))) {
             request.getRequestProgressTracker().log("GLOBAL LOGOUT of {0}", request.getUserPrincipal());
             LOG.info("GLOBAL LOGOUT of {}", request.getUserPrincipal());
-            triggerAuthentication(request, response, chain); // reads the GLO parameter and acts accordingly.
+            triggerAuthenticationInternal(request, response, chain); // reads the GLO parameter and acts accordingly.
             return true;
         } else if ("true".equals(request.getParameter("locallogout"))) { // FIXME remove when debugging done
             request.getRequestProgressTracker().log("local logout of {0}", request.getUserPrincipal());
@@ -156,7 +159,39 @@ public final class KeycloakAuthenticationFilterPlugin implements PlatformAccessF
 
     @Override
     public boolean triggerAuthentication(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                                         FilterChain chain)
+                                         FilterChain chain) throws ServletException, IOException {
+        if (sessionIdTransferService.authenticationShouldRedirectToPrimaryAuthenticationHost(request)) {
+            String redirUrl = sessionIdTransferService.sessionTransferTriggerUrl(request);
+            if (StringUtils.isNotBlank(redirUrl)) {
+                destroyAnonymousSession(request, response);
+                response.sendRedirect(redirUrl);
+            } else { // impossible
+                LOG.error("Bug: session transfer enabled, but no URL for {}", request.getRequestURL());
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "No session transfer URL");
+            }
+            return true;
+        } else {
+            return triggerAuthenticationInternal(request, response, chain);
+        }
+    }
+
+    /**
+     * If there is a session we teminate it, since it's going to be replaced, anyway and might result in cookie
+     * duplicates. As a safety precaution, we do this only for anonymous sessions.
+     */
+    protected void destroyAnonymousSession(SlingHttpServletRequest request, SlingHttpServletResponse response) {
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            boolean isNewSession = session.isNew();
+            if (isNewSession || "anonymous".equals(request.getRemoteUser())) {
+                LOG.info("Terminating soon to be obsolete session {}", session.getId());
+                session.invalidate();
+            }
+        }
+    }
+
+    protected boolean triggerAuthenticationInternal(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                                                    FilterChain chain)
             throws ServletException, IOException {
         ServletHttpFacade facade = new ServletHttpFacade(request, response);
         SamlDeployment deployment = deploymentContext.resolveDeployment(facade);
@@ -240,6 +275,7 @@ public final class KeycloakAuthenticationFilterPlugin implements PlatformAccessF
     /**
      * Logout from authentcator to clear cookies such as the annoying Form Authentication cookie (form.auth
      * .name/sling.formauth) that sometimes is left behind and will us immediately log in again.
+     *
      * @see org.apache.sling.auth.core.impl.SlingAuthenticator#logout(HttpServletRequest, HttpServletResponse)
      */
     protected void logoutAuthenticator(SlingHttpServletRequest request, SlingHttpServletResponse response) {
@@ -299,13 +335,14 @@ public final class KeycloakAuthenticationFilterPlugin implements PlatformAccessF
                 RecursiveToStringStyle toStringStyle = new MultilineRecursiveToStringStyle() {
                     @Override
                     public void append(final StringBuffer buffer, final String fieldName, final Object value, final Boolean fullDetail) {
-                        if (null != value && !(value instanceof Collection && ((Collection) value).isEmpty()))
+                        if (null != value && !(value instanceof Collection && ((Collection) value).isEmpty())) {
                             super.append(buffer, fieldName, value, fullDetail);
+                        }
                     }
 
                     @Override
                     public void append(final StringBuffer buffer, final String fieldName, final boolean[] array, final Boolean fullDetail) {
-                        if (null != array || array.length == 0) super.append(buffer, fieldName, array, fullDetail);
+                        if (null != array || array.length == 0) { super.append(buffer, fieldName, array, fullDetail); }
                     }
                 };
                 if (0 == 1 && samlSession != null) {

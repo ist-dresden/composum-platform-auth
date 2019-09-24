@@ -3,6 +3,7 @@ package com.composum.platform.auth.sessionidtransfer;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
+import java.net.URI;
 import java.net.URISyntaxException;
 
 /**
@@ -26,6 +27,14 @@ public interface SessionIdTransferService {
      */
     @Nullable
     String sessionTransferTriggerUrl(@Nullable String url, @Nonnull HttpServletRequest request) throws URISyntaxException;
+
+    /**
+     * Same as {@link #sessionTransferTriggerUrl(String, HttpServletRequest)} but for the current url of the {request}.
+     *
+     * @return the redirection URL or null if the service is not enabled.
+     */
+    @Nullable
+    String sessionTransferTriggerUrl(@Nonnull HttpServletRequest request);
 
     /**
      * Returns the URL registered by {@link #sessionTransferTriggerUrl(String, HttpServletRequest)}.
@@ -52,6 +61,18 @@ public interface SessionIdTransferService {
      */
     @Nullable
     SessionTransferInfo retrieveSessionTransferInfo(@Nullable String token);
+
+    /**
+     * Checks whether we are at the primary authentication host, as configured in
+     * {@link SessionIdTransferConfigurationService.SessionIdTransferConfiguration#authenticationHostUrl()}, or
+     * should redirect there via {@link #sessionTransferTriggerUrl(String, HttpServletRequest)} for authentication.
+     *
+     * @return true if the session transfer is
+     * {@link SessionIdTransferConfigurationService.SessionIdTransferConfiguration#enabled()} and we are not at the
+     * {@link SessionIdTransferConfigurationService.SessionIdTransferConfiguration#authenticationHostUrl()} ,
+     * otherwise false.
+     */
+    boolean authenticationShouldRedirectToPrimaryAuthenticationHost(@Nonnull HttpServletRequest request);
 
     /** The information about one session transfer. */
     class SessionTransferInfo {
