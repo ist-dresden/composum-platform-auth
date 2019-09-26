@@ -88,8 +88,9 @@ public class SessionIdTransferTriggerServlet extends SlingSafeMethodsServlet {
                     response.sendRedirect(redirectUrl);
                 }
             } else { // invalid token or timed out. Nothing sensible we can do here...
-                LOG.warn("Could not retrieve transferinfo for token {}", token);
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Session transfer token timed out or invalid.");
+                LOG.warn("Could not retrieve stored url for token {}", token);
+                // timeout is the usual cause, but there might also be misconfigurations etc.
+                response.sendError(HttpServletResponse.SC_REQUEST_TIMEOUT, "Timeout during login process");
             }
         }
     }

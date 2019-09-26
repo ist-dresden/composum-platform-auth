@@ -52,6 +52,12 @@ public class SessionIdTransferServiceImpl implements SessionIdTransferService, S
     public String sessionTransferTriggerUrl(@Nullable String url, @Nonnull HttpServletRequest request) throws URISyntaxException {
         SessionIdTransferConfiguration cfg = getConfiguration();
         if (cfg == null || !cfg.enabled()) { return null; }
+        if (request.getRequestURI().contains(SessionIdTransferCallbackServlet.PATH) ||
+                request.getRequestURI().contains(SessionIdTransferTriggerServlet.PATH)) {
+            LOG.error("Skip authentication redirection, since we got a redirection loop at {}",
+                    request.getRequestURL());
+            return null;
+        }
         String finalUrl = url;
         if (StringUtils.isBlank(url)) {
             StringBuffer buf = request.getRequestURL();

@@ -163,6 +163,7 @@ public final class KeycloakAuthenticationFilterPlugin implements PlatformAccessF
         if (sessionIdTransferService.authenticationShouldRedirectToPrimaryAuthenticationHost(request)) {
             String redirUrl = sessionIdTransferService.sessionTransferTriggerUrl(request);
             if (StringUtils.isNotBlank(redirUrl)) {
+                LOG.info("Redirecting for authentication to {}", redirUrl.replaceFirst("\\?.*", ""));
                 response.sendRedirect(redirUrl);
             } else { // impossible
                 LOG.error("Bug: session transfer enabled, but no URL for {}", request.getRequestURL());
