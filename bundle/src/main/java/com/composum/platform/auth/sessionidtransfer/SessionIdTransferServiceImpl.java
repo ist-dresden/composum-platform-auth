@@ -176,11 +176,19 @@ public class SessionIdTransferServiceImpl implements SessionIdTransferService, S
 
     @Activate
     @Modified
-    public void activate(SessionIdTransferConfigurationService.SessionIdTransferConfiguration theConfiguration) throws URISyntaxException {
-        this.configuration = theConfiguration;
-        this.authenticationHostUrl = null;
+    public void activate(SessionIdTransferConfigurationService.SessionIdTransferConfiguration theConfiguration) {
+        configuration = theConfiguration;
+        authenticationHostUrl = null;
         LOG.info("enabled: {}", theConfiguration.enabled());
-        this.authenticationHostUrl = new URI(theConfiguration.authenticationHostUrl());
+        authenticationHostUrl = null;
+        if (theConfiguration.enabled()) {
+            try {
+                authenticationHostUrl = new URI(theConfiguration.authenticationHostUrl());
+            } catch (URISyntaxException e) {
+                LOG.error("Parse error for configured authentication URL {} : {}",
+                        theConfiguration.authenticationHostUrl(), e);
+            }
+        }
     }
 
     @Deactivate

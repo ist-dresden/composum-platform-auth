@@ -103,7 +103,7 @@ public final class KeycloakAuthenticationFilterPlugin implements PlatformAccessF
                 name = "keycloak.filter.enabled",
                 description = "the on/off switch for the filter"
         )
-        boolean enabled() default true;
+        boolean enabled() default false;
     }
 
     @Activate
