@@ -17,7 +17,6 @@ import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
@@ -41,7 +40,8 @@ import java.net.URISyntaxException;
         property = {
                 Constants.SERVICE_DESCRIPTION + "=Composum Platform Auth Session ID Transfer Trigger Servlet",
                 ServletResolverConstants.SLING_SERVLET_PATHS + "=" + SessionIdTransferTriggerServlet.PATH,
-                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET,
+                "sling.auth.requirements=-/bin/cpm/platform/auth"
         },
         immediate = true
 )
@@ -55,7 +55,9 @@ public class SessionIdTransferTriggerServlet extends SlingSafeMethodsServlet {
      */
     public static final String PARAM_TOKEN = "urlToken";
 
-    /** Deployment path of this {@link SessionIdTransferTriggerServlet}. */
+    /**
+     * Deployment path of this {@link SessionIdTransferTriggerServlet}.
+     */
     public static final String PATH = "/bin/cpm/platform/auth/sessionTransferTrigger";
 
     @Reference
