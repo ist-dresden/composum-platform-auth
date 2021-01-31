@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>com.composum.platform</groupId>
         <artifactId>composum-platform-auth</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.0</version>
     </parent>
 
     <artifactId>composum-platform-auth-package</artifactId>
@@ -64,6 +64,33 @@
                 <artifactId>minify-maven-plugin</artifactId>
             </plugin>
 
+            <!-- embed the setup hook -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-bundles</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>${project.groupId}</groupId>
+                                    <artifactId>composum-platform-auth-setup</artifactId>
+                                    <outputDirectory>${project.build.directory}/vault-work/META-INF/vault/hooks
+                                    </outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+                <inherited>false</inherited>
+            </plugin>
+
             <plugin>
                 <groupId>com.day.jcr.vault</groupId>
                 <artifactId>content-package-maven-plugin</artifactId>
@@ -82,10 +109,20 @@
                             <root>/libs/composum/platform/auth</root>
                         </filter>
                         <filter>
+                            <!-- for testing purposes only TODO move to appropriate location -->
+                            <root>/content/test/composum/authtest</root>
+                        </filter>
+                        <filter>
                             <root>/libs/composum/platform/install</root>
                             <includes>
                                 <include>.*/org.apache.sling.auth.*\.jar</include>
                                 <include>.*/composum-platform-auth-bundle.*\.jar</include>
+                                <include>.*/bcp.*\.jar</include>
+                                <include>.*/xmlsec.*\.jar</include>
+                                <include>.*/jboss-logging.*\.jar</include>
+                                <include>
+                                    .*/org.apache.sling.serviceusermapping.impl.ServiceUserMapperImpl.amended-platformauth.config
+                                </include>
                             </includes>
                         </filter>
                     </filters>
@@ -94,6 +131,26 @@
                         <embedded>
                             <groupId>${project.groupId}</groupId>
                             <artifactId>composum-platform-auth-bundle</artifactId>
+                            <target>/libs/composum/platform/install</target>
+                        </embedded>
+                        <embedded>
+                            <groupId>org.apache.santuario</groupId>
+                            <artifactId>xmlsec</artifactId>
+                            <target>/libs/composum/platform/install</target>
+                        </embedded>
+                        <embedded>
+                            <groupId>org.jboss.logging</groupId>
+                            <artifactId>jboss-logging</artifactId>
+                            <target>/libs/composum/platform/install</target>
+                        </embedded>
+                        <embedded>
+                            <groupId>org.bouncycastle</groupId>
+                            <artifactId>bcprov-jdk15on</artifactId>
+                            <target>/libs/composum/platform/install</target>
+                        </embedded>
+                        <embedded>
+                            <groupId>org.bouncycastle</groupId>
+                            <artifactId>bcpkix-jdk15on</artifactId>
                             <target>/libs/composum/platform/install</target>
                         </embedded>
                     </embeddeds>
@@ -109,6 +166,11 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>composum-platform-auth-bundle</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>composum-platform-auth-setup</artifactId>
             <version>${project.version}</version>
         </dependency>
 
@@ -161,7 +223,13 @@
             </build>
         </profile>
         <profile>
+            <id>installContent</id>
+        </profile>
+        <profile>
             <id>installTestContent</id>
+        </profile>
+        <profile>
+            <id>installMapping</id>
         </profile>
 
     </profiles>
