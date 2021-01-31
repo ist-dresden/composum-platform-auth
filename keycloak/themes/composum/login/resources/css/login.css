@@ -1,0 +1,562 @@
+/**
+ * #CUSTOM# general settings
+ */
+
+* {
+    font-family: 'robotolight', "Open Sans", Helvetica, Arial, sans-serif;
+    font-size: 14px;
+}
+
+h1, h2, h3, h4, h5, h6, p, div {
+    font-weight: normal;
+}
+
+h1 {
+    font-size: 28px;
+    color: #aaa;
+}
+
+h2 {
+    font-size: 24px;
+}
+
+h3 {
+    font-size: 20px;
+}
+
+h4 {
+    font-size: 16px;
+}
+
+/**
+ * 'original'...
+ */
+
+#kc-locale ul {
+    display: none;
+    position: absolute;
+    background-color: #fff;
+    list-style: none;
+    right: 0;
+    top: 20px;
+    min-width: 100px;
+    padding: 2px 0;
+    border: solid 1px #bbb;
+}
+
+#kc-locale:hover ul {
+    display: block;
+    margin: 0;
+}
+
+#kc-locale ul li a {
+    display: block;
+    padding: 5px 14px;
+    color: #000 !important;
+    text-decoration: none;
+    line-height: 20px;
+}
+
+#kc-locale ul li a:hover {
+    color: #4d5258;
+    background-color: #d4edfa;
+}
+
+#kc-locale-dropdown a {
+    color: #4d5258;
+    background: 0 0;
+    padding: 0 15px 0 0;
+    font-weight: 300;
+}
+
+#kc-locale-dropdown a:hover {
+    text-decoration: none;
+}
+
+a#kc-current-locale-link {
+    display: block;
+    padding: 0 5px;
+}
+
+/* a#kc-current-locale-link:hover {
+    background-color: rgba(0,0,0,0.2);
+} */
+
+a#kc-current-locale-link::after {
+    content: "\2c5";
+    margin-left: 4px;
+}
+
+.login-pf .container {
+    padding-top: 40px;
+}
+
+.login-pf a:hover {
+    color: #0099d3;
+}
+
+#kc-logo {
+    width: 100%;
+}
+
+#kc-logo-wrapper {
+    background-image: url(../img/keycloak-logo-2.png);
+    background-repeat: no-repeat;
+    height: 63px;
+    width: 300px;
+    margin: 62px auto 0;
+}
+
+div.kc-logo-text {
+    background-image: url(../img/keycloak-logo-text.png);
+    background-repeat: no-repeat;
+    height: 63px;
+    width: 300px;
+    margin: 0 auto;
+}
+
+div.kc-logo-text span {
+    display: none;
+}
+
+#kc-header {
+    color: #ededed;
+    overflow: visible;
+    white-space: nowrap;
+}
+
+#kc-header-wrapper {
+    font-size: 29px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    line-height: 1.2em;
+    padding: 62px 10px 20px;
+    white-space: normal;
+}
+
+#kc-content {
+    width: 100%;
+}
+
+/* #kc-content-wrapper {
+    overflow-y: hidden;
+} */
+
+#kc-info {
+    padding-bottom: 200px;
+    margin-bottom: -200px;
+}
+
+#kc-info-wrapper {
+    font-size: 13px;
+}
+
+#kc-form-options span {
+    display: block;
+}
+
+#kc-form-options .checkbox {
+    margin-top: 0;
+    color: #72767b;
+}
+
+#kc-terms-text {
+    margin-bottom: 20px;
+}
+
+#kc-registration {
+    margin-bottom: 15px;
+}
+
+/* TOTP */
+
+ol#kc-totp-settings {
+    margin: 0;
+    padding-left: 20px;
+}
+
+ul#kc-totp-supported-apps {
+    margin-bottom: 10px;
+}
+
+#kc-totp-secret-qr-code {
+    max-width: 150px;
+    max-height: 150px;
+}
+
+#kc-totp-secret-key {
+    background-color: #fff;
+    color: #333333;
+    font-size: 16px;
+    padding: 10px 0;
+}
+
+/* OAuth */
+
+#kc-oauth h3 {
+    margin-top: 0;
+}
+
+#kc-oauth ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#kc-oauth ul li {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 12px;
+    padding: 10px 0;
+}
+
+#kc-oauth ul li:first-of-type {
+    border-top: 0;
+}
+
+#kc-oauth .kc-role {
+    display: inline-block;
+    width: 50%;
+}
+
+/* Code */
+#kc-code textarea {
+    width: 100%;
+    height: 8em;
+}
+
+/* Social */
+
+#kc-social-providers ul {
+    padding: 0;
+}
+
+#kc-social-providers li {
+    display: block;
+}
+
+#kc-social-providers li:first-of-type {
+    margin-top: 0;
+}
+
+.zocial,
+a.zocial {
+    width: 100%;
+    font-weight: normal;
+    font-size: 14px;
+    text-shadow: none;
+    border: 0;
+    background: #f5f5f5;
+    color: #72767b;
+    border-radius: 0;
+    white-space: normal;
+}
+
+.zocial:before {
+    border-right: 0;
+    margin-right: 0;
+}
+
+.zocial span:before {
+    padding: 7px 10px;
+    font-size: 14px;
+}
+
+.zocial:hover {
+    background: #ededed !important;
+}
+
+.zocial.facebook,
+.zocial.github,
+.zocial.google,
+.zocial.microsoft,
+.zocial.stackoverflow,
+.zocial.linkedin,
+.zocial.twitter {
+    background-image: none;
+    border: 0;
+
+    box-shadow: none;
+    text-shadow: none;
+}
+
+/* Copy of zocial windows classes to be used for microsoft's social provider button */
+.zocial.microsoft:before {
+    content: "\f15d";
+}
+
+.zocial.stackoverflow:before {
+    color: inherit;
+}
+
+
+@media (min-width: 768px) {
+    #kc-container-wrapper {
+        position: absolute;
+        width: 100%;
+    }
+
+    .login-pf .container {
+        padding-right: 80px;
+    }
+
+    #kc-locale {
+        position: relative;
+        text-align: right;
+        z-index: 9999;
+    }
+}
+
+@media (max-width: 767px) {
+
+    .login-pf body {
+        background: white;
+    }
+
+    #kc-header {
+        padding-left: 15px;
+        padding-right: 15px;
+        float: none;
+        text-align: left;
+    }
+
+    #kc-header-wrapper {
+        font-size: 16px;
+        font-weight: bold;
+        padding: 20px 60px 0 0;
+        color: #72767b;
+        letter-spacing: 0;
+    }
+
+    div.kc-logo-text {
+        margin: 0;
+        width: 150px;
+        height: 32px;
+        background-size: 100%;
+    }
+
+    #kc-form {
+        float: none;
+    }
+
+    #kc-info-wrapper {
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        margin-top: 15px;
+        padding-top: 15px;
+        padding-left: 0px;
+        padding-right: 15px;
+    }
+
+    #kc-social-providers li {
+        display: block;
+        margin-right: 5px;
+    }
+
+    .login-pf .container {
+        padding-top: 15px;
+        padding-bottom: 15px;
+    }
+
+    #kc-locale {
+        position: absolute;
+        width: 200px;
+        top: 20px;
+        right: 20px;
+        text-align: right;
+        z-index: 9999;
+    }
+
+    #kc-logo-wrapper {
+        background-size: 100px 21px;
+        height: 21px;
+        width: 100px;
+        margin: 20px 0 0 20px;
+    }
+
+}
+
+@media (min-height: 646px) {
+    #kc-container-wrapper {
+        bottom: 12%;
+    }
+}
+
+@media (max-height: 645px) {
+    #kc-container-wrapper {
+        padding-top: 50px;
+        top: 20%;
+    }
+}
+
+.card-pf form.form-actions .btn {
+    float: right;
+    margin-left: 10px;
+}
+
+#kc-form-buttons {
+    margin-top: 40px;
+}
+
+.login-pf-page .login-pf-brand {
+    margin-top: 20px;
+    max-width: 360px;
+    width: 40%;
+}
+
+.login-pf-page .login-pf-signup {
+    font-size: 15px;
+    color: #72767b;
+}
+
+#kc-content-wrapper .row {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+@media (min-width: 768px) {
+    .login-pf-page .login-pf-social-section:first-of-type {
+        padding-right: 39px;
+        border-right: 1px solid #d1d1d1;
+        margin-right: -1px;
+    }
+
+    .login-pf-page .login-pf-social-section:last-of-type {
+        padding-left: 40px;
+    }
+
+    .login-pf-page .login-pf-social-section .login-pf-social-link:last-of-type {
+        margin-bottom: 0;
+    }
+}
+
+.login-pf-page .login-pf-social-link {
+    margin-bottom: 25px;
+}
+
+.login-pf-page .login-pf-social-link a {
+    padding: 2px 0;
+}
+
+.login-pf-page.login-pf-page-accounts {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.login-pf-page .btn-primary {
+    margin-top: 0;
+}
+
+/**
+ * #CUSTOM# redefinitions / extensions
+ */
+
+.login-pf body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    background: #f9fff6;
+}
+
+.login-wrapper-top, .login-wrapper-bottom {
+    display: inline-block;
+    max-width: 75%;
+    color: #666;
+    opacity: 0.8;
+}
+
+@media (min-width: 768px) {
+    .login-wrapper-top, .login-wrapper-bottom {
+        max-width: 50%;
+    }
+}
+
+.login-wrapper-pf-page {
+    max-width: 900px;
+    height: 100%;
+    margin: 0 auto;
+    padding: 0 20px;
+    background: transparent url(../img/bg-ist-w-rg.png) 75% 0 no-repeat;
+    background-size: auto;
+}
+
+.alert-error {
+    background-color: #ffffff;
+    border-color: #cc0000;
+    color: #333333;
+    opacity: 0.9;
+}
+
+.login-pf-page .form-control {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.login-pf-page .form-control:focus {
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 8px rgba(120, 180, 100, .6);
+    border-color: #70b564;
+}
+
+.login-pf-page #kc-form-buttons {
+    width: 100%;
+    text-align: right;
+    margin: 25px 1px 5px;
+}
+
+.login-pf-page #kc-form-buttons .btn {
+    display: inline-block;
+    width: auto;
+    min-width: 150px;
+    box-shadow: inset 0 1px 0 rgba(120, 180, 100, .15), 0 1px 1px rgba(0, 0, 0, .075);
+    background-image: linear-gradient(to bottom, #88c979 0, #446a3a 100%);
+    border-color: #fff;
+    padding: 7px 25px;
+}
+
+.login-pf-page #kc-form-buttons .btn:focus,
+.login-pf-page #kc-form-buttons .btn:hover {
+    background-color: #446a3a;
+    outline-color: #fff;
+}
+
+.login-pf-page .card-pf {
+    max-width: 600px;
+    margin: 20px auto 30px;
+    padding: 0 20px 15px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    -webkit-box-shadow: 0 1px 1px rgba(0, 0, 0, .05);
+    box-shadow: 0 1px 1px rgba(0, 0, 0, .05);
+    background: rgba(120, 180, 100, .4);
+}
+
+.login-pf-page .card-pf .login-pf-header {
+    position: relative;
+}
+
+#kc-locale-wrapper {
+    position: absolute;
+    right: 0;
+    top: 0;
+    background-color: rgba(190, 222, 180, 0.6);
+}
+
+@media (min-width: 768px) {
+    #kc-locale-wrapper {
+        top: 20px;
+    }
+}
+
+@media (min-width: 768px) {
+    .login-pf-page .login-pf-social-section:last-of-type {
+        border-left-color: #88c979;
+    }
+}
+
+.login-pf-page .login-pf-social-link {
+    margin-top: 20px;
+    margin-bottom: 0;
+}
+
+.login-pf-page .login-pf-social-link a {
+    background-color: rgba(255, 255, 220, 0.8);
+}

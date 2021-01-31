@@ -1,0 +1,69 @@
+[
+  {
+    "path": "/home/users",
+    "acl": [
+      {
+        "principal": "composum-platform-auth-service",
+        "acl": [
+          {
+            "allow": true,
+            "privileges": "jcr:read",
+            "restrictions": {
+              "rep:glob": ""
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "/home/users/keycloak",
+    "jcr:primaryType": "rep:AuthorizableFolder",
+    "acl": [
+      {
+        "principal": "composum-platform-auth-service",
+        "acl": [
+          {
+            "allow": true,
+            "privileges": "jcr:all"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "/home/groups",
+    "acl": [
+      {
+        "principal": "composum-platform-auth-service",
+        "acl": [
+          {
+            "allow": true,
+            "privileges": [
+              "jcr:read",
+              "jcr:modifyProperties",
+              "jcr:modifyAccessControl",
+              "jcr:all"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "/conf/composum/platform/auth",
+    "acl": [
+      {
+        "principal": "composum-platform-auth-service",
+        "acl": [
+          {
+            "allow": true,
+            "privileges": [
+              "jcr:read"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]
