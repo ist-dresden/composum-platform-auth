@@ -1,0 +1,10 @@
+Bundle-Category: sling
+Bundle-DocURL: https://sling.apache.org
+Bundle-Activator: org.apache.sling.auth.saml2.Activator
+Jaas-ModuleClass: org.apache.sling.auth.saml2.sp.Saml2LoginModule
+-snapshot: SNAPSHOT
+-noextraheaders: true
+-removeheaders: Include-Resource, Private-Package
+Import-Package:\
+!javax.annotation*,\
+*
