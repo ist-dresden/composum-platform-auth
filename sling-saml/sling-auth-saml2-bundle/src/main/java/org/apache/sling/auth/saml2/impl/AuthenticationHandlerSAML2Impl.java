@@ -54,12 +54,17 @@ import org.opensaml.saml.saml2.core.Attribute;
 import org.opensaml.saml.saml2.core.AuthnRequest;
 import org.opensaml.saml.saml2.core.EncryptedAssertion;
 import org.opensaml.saml.saml2.core.Issuer;
+import org.opensaml.saml.saml2.core.LogoutRequest;
+import org.opensaml.saml.saml2.core.NameID;
 import org.opensaml.saml.saml2.core.NameIDPolicy;
 import org.opensaml.saml.saml2.core.NameIDType;
 import org.opensaml.saml.saml2.core.RequestAbstractType;
 import org.opensaml.saml.saml2.core.Response;
+import org.opensaml.saml.saml2.core.SessionIndex;
 import org.opensaml.saml.saml2.core.SubjectConfirmation;
 import org.opensaml.saml.saml2.core.SubjectConfirmationData;
+import org.opensaml.saml.saml2.core.impl.NameIDBuilder;
+import org.opensaml.saml.saml2.core.impl.SessionIndexBuilder;
 import org.opensaml.saml.saml2.encryption.Decrypter;
 import org.opensaml.saml.saml2.metadata.Endpoint;
 import org.opensaml.saml.saml2.metadata.SingleLogoutService;
@@ -88,6 +93,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.jcr.RepositoryException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -97,21 +103,24 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.Principal;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 
+import static org.opensaml.saml.saml2.core.LogoutRequest.USER_REASON;
+
 @Component(
-        service = AuthenticationHandler.class ,
+        service = AuthenticationHandler.class,
         name = AuthenticationHandlerSAML2Impl.SERVICE_NAME,
         configurationPolicy = ConfigurationPolicy.REQUIRE,
         immediate = true,
         property = {"sling.servlet.methods={GET, POST}",
-            AuthenticationHandler.PATH_PROPERTY+"={}",
-            AuthenticationHandler.TYPE_PROPERTY + "=" + AuthenticationHandlerSAML2Impl.AUTH_TYPE,
-            "service.description=SAML2 Authentication Handler",
-            "service.ranking:Integer=42",
+                AuthenticationHandler.PATH_PROPERTY + "={}",
+                AuthenticationHandler.TYPE_PROPERTY + "=" + AuthenticationHandlerSAML2Impl.AUTH_TYPE,
+                "service.description=SAML2 Authentication Handler",
+                "service.ranking:Integer=42",
         })
 @Designate(ocd = AuthenticationHandlerSAML2Config.class, factory = true)
 public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implements AuthenticationHandlerSAML2 {
@@ -145,7 +154,8 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
      */
     private TokenStore tokenStore;
 
-    @Activate @Modified
+    @Activate
+    @Modified
     protected void activate(final AuthenticationHandlerSAML2Config config, ComponentContext componentContext)
             throws InvalidKeyException, NoSuchAlgorithmException, IllegalStateException, IOException {
         this.setConfigs(config);
@@ -172,17 +182,19 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
         this.tokenStore = new TokenStore(file, sessionTimeout, false);
     }
 
-    TokenStore getTokenStore(){ return this.tokenStore; }
+    TokenStore getTokenStore() {
+        return this.tokenStore;
+    }
 
-    Credential getSpKeypair(){
+    Credential getSpKeypair() {
         return this.spKeypair;
     }
 
-    Credential getIdpVerificationCert(){
+    Credential getIdpVerificationCert() {
         return this.idpVerificationCert;
     }
 
-    SessionStorage getStorageAuthInfo(){
+    SessionStorage getStorageAuthInfo() {
         return this.storageAuthInfo;
     }
 
@@ -192,9 +204,9 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
      */
     @Override
     public AuthenticationInfo extractCredentials(final HttpServletRequest httpServletRequest,
-                                                 final HttpServletResponse httpServletResponse)  {
+                                                 final HttpServletResponse httpServletResponse) {
 // 0. if disabled return null
-        if(!this.getSaml2SPEnabled()){
+        if (!this.getSaml2SPEnabled()) {
             return null;
         }
 
@@ -203,10 +215,21 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
         if (reqURI.equals(this.getAcsPath())) {
             return processAssertionConsumerService(httpServletRequest);
         }
+// 1a. If the request to the derived ACS logout URL the logout cycle should be finalized
+        if (reqURI.equals(this.getAcsPath() + "/loggedout")) {
+            final String redirectUrl = getPostLogoutRedirect();
+            if (StringUtils.isNotBlank(redirectUrl) && !httpServletResponse.isCommitted())
+                try {
+                    httpServletResponse.sendRedirect(redirectUrl);
+                } catch (IOException ex) {
+                    logger.error(ex.getMessage(), ex);
+                }
+            return null;
+        }
 // else, RequestURI is not the ACS path
 
 // 2.  try credentials from the session
-        if ( !this.getSaml2Path().isEmpty() && reqURI.startsWith(this.getSaml2Path())) {
+        if (!this.getSaml2Path().isEmpty() && reqURI.startsWith(this.getSaml2Path())) {
             final String authData = getStorageAuthInfo().getString(httpServletRequest);
             if (authData != null) {
                 if (tokenStore.isValid(authData)) {
@@ -216,7 +239,7 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
                     // so that the invalid cookie isn't present on the authN operation.
                     clearSessionAttributes(httpServletRequest);
 
-                    if ( AuthUtil.isValidateRequest(httpServletRequest)) {
+                    if (AuthUtil.isValidateRequest(httpServletRequest)) {
                         // signal the requestCredentials method a previous login failure
                         httpServletRequest.setAttribute(FAILURE_REASON, SamlReason.TIMEOUT);
                         return AuthenticationInfo.FAIL_AUTH;
@@ -231,7 +254,7 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
         getStorageAuthInfo().clear(httpServletRequest);
     }
 
-    private AuthenticationInfo processAssertionConsumerService(final HttpServletRequest httpServletRequest){
+    private AuthenticationInfo processAssertionConsumerService(final HttpServletRequest httpServletRequest) {
         doClassloading();
         MessageContext messageContext = decodeHttpPostSamlResp(httpServletRequest);
         Assertion assertion = null;
@@ -261,24 +284,25 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
      * Requests authentication information from the client.
      * Returns true if the information has been requested and request processing can be terminated normally.
      * Otherwise the authorization information could not be requested.
-     *
+     * <p>
      * The HttpServletResponse.sendError methods should not be used by the implementation because these responses
      * might be post-processed by the servlet container's error handling infrastructure thus preventing the correct operation of the authentication handler.
-     *
+     * <p>
      * To convey a HTTP response status the HttpServletResponse.setStatus method should be used.
-     *
+     * <p>
      * The value of PATH_PROPERTY service registration property value triggering this call is available as the path request attribute.
      * If the service is registered with multiple path values, the value of the path request attribute may be used to implement specific handling.
-     *
+     * <p>
      * If the REQUEST_LOGIN_PARAMETER request parameter is set only those authentication handlers registered with an authentication type matching the parameter will be considered for requesting credentials through this method.
-     *
+     * <p>
      * A handler not registered with an authentication type will, for backwards compatibility reasons, always be called ignoring the actual value of the REQUEST_LOGIN_PARAMETER parameter.
-     *
+     * <p>
      * Parameters:
-     * @param httpServletRequest - The request object.
+     *
+     * @param httpServletRequest  - The request object.
      * @param httpServletResponse - The response object to which to send the request.
-     * @returns true if the handler is able to send an authentication inquiry for the given request. false otherwise.
      * @throws IOException - If an error occurs sending the authentication inquiry to the client.
+     * @returns true if the handler is able to send an authentication inquiry for the given request. false otherwise.
      */
     @Override
     public boolean requestCredentials(final HttpServletRequest httpServletRequest,
@@ -289,7 +313,7 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
             return false;
         }
 
-        if (this.getSaml2SPEnabled() ) {
+        if (this.getSaml2SPEnabled()) {
             doClassloading();
             setGotoURLOnSession(httpServletRequest);
             redirectUserForAuthentication(httpServletRequest, httpServletResponse);
@@ -298,7 +322,7 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
         return false;
     }
 
-    void doClassloading(){
+    void doClassloading() {
         // Classloading
         BundleWiring bundleWiring = FrameworkUtil.getBundle(AuthenticationHandlerSAML2Impl.class).adapt(BundleWiring.class);
         ClassLoader loader = bundleWiring.getClassLoader();
@@ -308,13 +332,22 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
 
     private void setGotoURLOnSession(final HttpServletRequest request) {
         SessionStorage sessionStorage = new SessionStorage(GOTO_URL_SESSION_ATTRIBUTE);
-        sessionStorage.setString(request , request.getRequestURL().toString());
+        sessionStorage.setString(request, request.getRequestURL().toString());
     }
 
     private void redirectUserForAuthentication(final HttpServletRequest httpServletRequest,
                                                final HttpServletResponse httpServletResponse) {
         AuthnRequest authnRequest = buildAuthnRequest();
         redirectUserWithRequest(httpServletRequest, httpServletResponse, authnRequest);
+    }
+
+    private void redirectUserForSingleLogout(final HttpServletRequest httpServletRequest,
+                                             final HttpServletResponse httpServletResponse) {
+        Principal principal = httpServletRequest.getUserPrincipal();
+        if (principal != null) {
+            LogoutRequest logoutRequest = buildLogoutRequest(principal.getName(), null);
+            redirectUserWithRequest(httpServletRequest, httpServletResponse, logoutRequest);
+        }
     }
 
     /**
@@ -329,22 +362,25 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
         return requestLogin != null && !AUTH_TYPE.equals(requestLogin);
     }
 
-    private void redirectUserWithRequest(final HttpServletRequest httpServletRequest ,
-                     final HttpServletResponse httpServletResponse, final RequestAbstractType requestForIDP) {
+    private void redirectUserWithRequest(final HttpServletRequest httpServletRequest,
+                                         final HttpServletResponse httpServletResponse, final RequestAbstractType requestForIDP) {
         MessageContext context = new MessageContext();
         context.setMessage(requestForIDP);
-        SAMLBindingContext bindingContext = context.getSubcontext(SAMLBindingContext.class, true);
-        SAMLPeerEntityContext peerEntityContext = context.getSubcontext(SAMLPeerEntityContext.class, true);
-        SAMLEndpointContext endpointContext = peerEntityContext.getSubcontext(SAMLEndpointContext.class, true);
+        SAMLBindingContext bindingContext = Objects.requireNonNull(context.getSubcontext(SAMLBindingContext.class, true));
+        SAMLPeerEntityContext peerEntityContext = Objects.requireNonNull(context.getSubcontext(SAMLPeerEntityContext.class, true));
+        SAMLEndpointContext endpointContext = Objects.requireNonNull(peerEntityContext.getSubcontext(SAMLEndpointContext.class, true));
         if (requestForIDP instanceof AuthnRequest) {
             setRelayStateOnSession(httpServletRequest, bindingContext);
-            setRequestIDOnSession(httpServletRequest, (AuthnRequest)requestForIDP);
+            setRequestIDOnSession(httpServletRequest, (AuthnRequest) requestForIDP);
             endpointContext.setEndpoint(getIPDEndpoint());
+        } else if (requestForIDP instanceof LogoutRequest) {
+            endpointContext.setEndpoint(getSLOEndpoint());
         }
         SignatureSigningParameters signatureSigningParameters = new SignatureSigningParameters();
         signatureSigningParameters.setSigningCredential(this.getSpKeypair());
         signatureSigningParameters.setSignatureAlgorithm(SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA256);
-        context.getSubcontext(SecurityParametersContext.class, true).setSignatureSigningParameters(signatureSigningParameters);
+        Objects.requireNonNull(context.getSubcontext(SecurityParametersContext.class, true))
+                .setSignatureSigningParameters(signatureSigningParameters);
         HTTPRedirectDeflateEncoder encoder = new HTTPRedirectDeflateEncoder();
         encoder.setMessageContext(context);
         encoder.setHttpServletResponse(httpServletResponse);
@@ -363,7 +399,6 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
             throw new SAML2RuntimeException(e);
         }
     }
-
 
     Endpoint getIPDEndpoint() {
         SingleSignOnService endpoint = Helpers.buildSAMLObject(SingleSignOnService.class);
@@ -401,6 +436,27 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
         return authnRequest;
     }
 
+    LogoutRequest buildLogoutRequest(@Nonnull final String userId, @Nullable final String sessionIdx) {
+        LogoutRequest logoutRequest = Helpers.buildSAMLObject(LogoutRequest.class);
+        logoutRequest.setIssueInstant(Instant.now());
+        logoutRequest.setDestination(this.getSaml2LogoutURL());
+        // Entity ID
+        logoutRequest.setID(Helpers.generateSecureRandomId());
+        logoutRequest.setIssuer(buildIssuer());
+        // User and Session
+        NameID nameId = new NameIDBuilder().buildObject();
+        nameId.setFormat("urn:oasis:names:tc:SAML:2.0:nameid-format:entity");
+        nameId.setValue(userId);
+        logoutRequest.setNameID(nameId);
+        if (StringUtils.isNotBlank(sessionIdx)) {
+            SessionIndex sessionIndex = new SessionIndexBuilder().buildObject();
+            sessionIndex.setSessionIndex(sessionIdx);
+            logoutRequest.getSessionIndexes().add(sessionIndex);
+        }
+        logoutRequest.setReason(USER_REASON);
+        return logoutRequest;
+    }
+
     Issuer buildIssuer() {
         Issuer issuer = Helpers.buildSAMLObject(Issuer.class);
         issuer.setValue(this.getEntityID());
@@ -430,7 +486,6 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
             throw new SAML2RuntimeException(e);
         }
     }
-
 
     private Assertion decryptAssertion(final EncryptedAssertion encryptedAssertion) {
         // Use SP Private Key to decrypt
@@ -482,7 +537,7 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
             if (attribute.getName().equals(this.getSaml2groupMembershipAttr())) {
                 setGroupMembership(attribute, saml2User);
             }
-            if (this.getSyncAttrMap() != null && this.getSyncAttrMap().containsKey(attribute.getName())){
+            if (this.getSyncAttrMap() != null && this.getSyncAttrMap().containsKey(attribute.getName())) {
                 syncUserAttributes(attribute, saml2User, this.getSyncAttrMap().get(attribute.getName()));
             }
         }
@@ -490,16 +545,16 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
         boolean setUpOk = saml2UserMgtService.setUp();
         if (setUpOk && saml2User != null && saml2User.getId() != null) {
             User samlUser;
-            if(Objects.nonNull(getSaml2userHome()) && !getSaml2userHome().isEmpty()){
+            if (Objects.nonNull(getSaml2userHome()) && !getSaml2userHome().isEmpty()) {
                 samlUser = saml2UserMgtService.getOrCreateSamlUser(saml2User, this.getSaml2userHome());
             } else {
                 samlUser = saml2UserMgtService.getOrCreateSamlUser(saml2User);
             }
-                         
+
             saml2UserMgtService.updateGroupMembership(saml2User);
             saml2UserMgtService.updateUserProperties(saml2User);
             return samlUser;
-        } else if (saml2User != null && saml2User.getId() == null){
+        } else if (saml2User != null && saml2User.getId() == null) {
             saml2UserMgtService.cleanUp();
             throw new SAML2RuntimeException("SAML2 User ID attribute name (saml2userIDAttr) is not correctly configured.");
         }
@@ -510,8 +565,8 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
     private void setUserId(Attribute attribute, Saml2User saml2User) {
         logger.debug("username attr name: {}", attribute.getName());
         for (XMLObject attributeValue : attribute.getAttributeValues()) {
-            if ( ((XSString) attributeValue).getValue() != null ) {
-                saml2User.setId( ((XSString) attributeValue).getValue());
+            if (((XSString) attributeValue).getValue() != null) {
+                saml2User.setId(((XSString) attributeValue).getValue());
                 logger.debug("username value: {}", saml2User.getId());
             }
         }
@@ -530,7 +585,7 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
 
     private void syncUserAttributes(Attribute attribute, Saml2User saml2User, String propertyName) {
         for (XMLObject attributeValue : attribute.getAttributeValues()) {
-            if (((XSString) attributeValue).getValue() != null ) {
+            if (((XSString) attributeValue).getValue() != null) {
                 saml2User.addUserProperty(propertyName, attributeValue);
                 logger.debug("sync attr name: {}", propertyName);
                 logger.debug("attribute value: {}", ((XSString) attributeValue).getValue());
@@ -538,7 +593,7 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
         }
     }
 
-    AuthenticationInfo buildAuthInfo(final User user){
+    AuthenticationInfo buildAuthInfo(final User user) {
         try {
             AuthenticationInfo authInfo = new AuthenticationInfo(AUTH_TYPE, user.getID());
             authInfo.put("user.jcr.credentials", new Saml2Credentials(user.getID()));
@@ -566,7 +621,7 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
         sessionStorage.setString(req, state);
     }
 
-    private void setRequestIDOnSession(HttpServletRequest req, AuthnRequest authnRequest){
+    private void setRequestIDOnSession(HttpServletRequest req, AuthnRequest authnRequest) {
         SessionStorage sessionStorage = new SessionStorage(SAML2_REQUEST_ID);
         sessionStorage.setString(req, authnRequest.getID());
     }
@@ -576,9 +631,9 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
         String reportedRelayState = bindingContext.getRelayState();
         SessionStorage relayStateStore = new SessionStorage(this.getSaml2SessionAttr());
         String savedRelayState = relayStateStore.getString(req);
-        if (savedRelayState == null || savedRelayState.isEmpty()){
+        if (savedRelayState == null || savedRelayState.isEmpty()) {
             return false;
-        } else if (savedRelayState.equals(reportedRelayState)){
+        } else if (savedRelayState.equals(reportedRelayState)) {
             return true;
         }
         return false;
@@ -613,10 +668,8 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
     }
 
 
-
-
     private void redirectToGotoURL(HttpServletRequest req, HttpServletResponse resp) {
-        String gotoURL = (String)req.getSession().getAttribute(GOTO_URL_SESSION_ATTRIBUTE);
+        String gotoURL = (String) req.getSession().getAttribute(GOTO_URL_SESSION_ATTRIBUTE);
         logger.info("Redirecting to requested URL: {}", gotoURL);
         try {
             resp.sendRedirect(gotoURL);
@@ -633,10 +686,14 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
      * @throws IOException
      */
     @Override
-    public void dropCredentials(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws IOException {
-        clearSessionAttributes(httpServletRequest);
-        if(!this.getSaml2LogoutURL().isEmpty()){
-            httpServletResponse.sendRedirect(this.getSaml2LogoutURL());
+    public void dropCredentials(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
+        // check that user is authenticated using this handler to support the auth handler cascade for logout also
+        final String authData = getStorageAuthInfo().getString(httpServletRequest);
+        if (authData != null) {
+            clearSessionAttributes(httpServletRequest);
+            if (!this.getSaml2LogoutURL().isEmpty()) {
+                redirectUserForSingleLogout(httpServletRequest, httpServletResponse);
+            }
         }
     }
 
@@ -708,15 +765,12 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
      * <p>
      * This method is intended to be called in case authentication succeeded.
      *
-     * @param request
-     *            The current request
-     * @param response
-     *            The current response
-     * @param authInfo
-     *            The authentication info used to successful log in
+     * @param request  The current request
+     * @param response The current response
+     * @param authInfo The authentication info used to successful log in
      */
     void refreshAuthData(final HttpServletRequest request, final HttpServletResponse response,
-                                 final AuthenticationInfo authInfo) {
+                         final AuthenticationInfo authInfo) {
 
         // get current authentication data, may be missing after first login
         String token = getStorageAuthInfo().getString(request);
@@ -793,8 +847,7 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
      * This method is not part of the API of this class and is package private to
      * enable unit tests.
      *
-     * @param bundleContext
-     *            The BundleContext to use to make an relative file absolute
+     * @param bundleContext The BundleContext to use to make an relative file absolute
      * @return The absolute file
      */
     File getTokenFile(final BundleContext bundleContext) {

@@ -77,9 +77,13 @@ public @interface AuthenticationHandlerSAML2Config {
         description="")
     String saml2IDPDestination() default "http://localhost:8080/idp/profile/SAML2/Redirect/SSO";
 
-    @AttributeDefinition(name = "Logout URL",
-            description="Redirect User to this URL when they logout")
+    @AttributeDefinition(name = "SAML2 Logout URL",
+            description="Redirect User to this URL to trigger a single logout")
     String saml2LogoutURL() default "https://sling.apache.org/";
+
+    @AttributeDefinition(name = "Post Logout Target",
+            description="Redirect User to this URL after successful logout")
+    String postLogoutRedirect() default "/";
 
     @AttributeDefinition(
         name = "Service Provider Enabled",

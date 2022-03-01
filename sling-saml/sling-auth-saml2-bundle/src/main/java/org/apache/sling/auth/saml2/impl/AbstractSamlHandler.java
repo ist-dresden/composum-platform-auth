@@ -49,6 +49,7 @@ abstract class AbstractSamlHandler extends DefaultAuthenticationFeedbackHandler 
     private List<String> syncGroups;
     private List<String> syncAttrs;
     private String saml2LogoutURL;
+    private String postLogoutRedirect;
     private Map<String,String> syncAttrMap;
 
     public static final String GOTO_URL_SESSION_ATTRIBUTE = "gotoURL";
@@ -74,6 +75,7 @@ abstract class AbstractSamlHandler extends DefaultAuthenticationFeedbackHandler 
         this.acsPath = config.acsPath();
         this.syncAttrs = Arrays.asList(config.syncAttrs());
         this.saml2LogoutURL = config.saml2LogoutURL();
+        this.postLogoutRedirect = config.postLogoutRedirect();
         setSyncMap();
     }
 
@@ -113,6 +115,9 @@ abstract class AbstractSamlHandler extends DefaultAuthenticationFeedbackHandler 
     }
     String getSaml2LogoutURL() {
         return this.saml2LogoutURL;
+    }
+    String getPostLogoutRedirect() {
+        return this.postLogoutRedirect;
     }
     String getJksFileLocation() {
         return this.jksFileLocation;
