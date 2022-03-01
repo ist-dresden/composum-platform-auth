@@ -22,11 +22,16 @@ import javax.jcr.Credentials;
 public class Saml2Credentials implements Credentials {
     private String userId;
 
-    public Saml2Credentials(String userId){
+    public Saml2Credentials(String userId) {
         this.userId = userId;
     }
-    public String getUserId()
-    {
+
+    public String getUserId() {
         return userId;
+    }
+
+    @Override
+    public String toString() {
+        return getUserId();
     }
 }

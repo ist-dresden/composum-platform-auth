@@ -1,0 +1,27 @@
+[
+  {
+    "path": [
+      "/"
+    ],
+    "acl": {
+      "principal": "composum-platform-slingsaml",
+      "rule": {
+        "grant": "jcr:read",
+        "restrictions": {
+          "rep:glob": ""
+        }
+      }
+    }
+  },
+  {
+    "path": [
+      "/home"
+    ],
+    "acl": {
+      "principal": "composum-platform-slingsaml",
+      "rule": {
+        "grant": "jcr:all"
+      }
+    }
+  }
+]

@@ -23,7 +23,9 @@ package org.apache.sling.auth.saml2.impl;
 import org.apache.sling.auth.core.spi.DefaultAuthenticationFeedbackHandler;
 import org.apache.sling.auth.saml2.AuthenticationHandlerSAML2Config;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 abstract class AbstractSamlHandler extends DefaultAuthenticationFeedbackHandler {
@@ -44,7 +46,8 @@ abstract class AbstractSamlHandler extends DefaultAuthenticationFeedbackHandler 
     private String spKeysPassword;
     private String idpCertAlias;
     private String acsPath;
-    private String[] syncAttrs;
+    private List<String> syncGroups;
+    private List<String> syncAttrs;
     private String saml2LogoutURL;
     private Map<String,String> syncAttrMap;
 
@@ -61,6 +64,7 @@ abstract class AbstractSamlHandler extends DefaultAuthenticationFeedbackHandler 
         this.uidAttrName = config.saml2userIDAttr();
         this.samlUserHome = config.saml2userHome();
         this.groupMembershipName = config.saml2groupMembershipAttr();
+        this.syncGroups = Arrays.asList(config.syncGroups());
         this.entityID = config.entityID();
         this.jksFileLocation = config.jksFileLocation();
         this.jksStorePassword = config.jksStorePassword();
@@ -68,7 +72,7 @@ abstract class AbstractSamlHandler extends DefaultAuthenticationFeedbackHandler 
         this.spKeysPassword = config.spKeysPassword();
         this.idpCertAlias = config.idpCertAlias();
         this.acsPath = config.acsPath();
-        this.syncAttrs = config.syncAttrs();
+        this.syncAttrs = Arrays.asList(config.syncAttrs());
         this.saml2LogoutURL = config.saml2LogoutURL();
         setSyncMap();
     }
@@ -85,6 +89,9 @@ abstract class AbstractSamlHandler extends DefaultAuthenticationFeedbackHandler 
     }
     String getSaml2groupMembershipAttr() {
         return this.groupMembershipName;
+    }
+    List<String> getSyncGroups() {
+        return this.syncGroups;
     }
     String getSaml2SessionAttr() {
         return this.saml2SessAttr;
@@ -122,7 +129,7 @@ abstract class AbstractSamlHandler extends DefaultAuthenticationFeedbackHandler 
     String getIdpCertAlias() {
         return this.idpCertAlias;
     }
-    String[] getSyncAttrs() {
+    List<String> getSyncAttrs() {
         return this.syncAttrs;
     }
     Map<String,String> getSyncAttrMap(){ return this.syncAttrMap; }

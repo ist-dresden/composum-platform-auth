@@ -61,6 +61,10 @@ public @interface AuthenticationHandlerSAML2Config {
         description="Name of the attribute holding the users' group memberships")
     String saml2groupMembershipAttr() default "";
 
+    @AttributeDefinition(name = "Synchronized Groups",
+            description="the set of group names / identifiers mapped from external identity provider")
+    String[] syncGroups() default {};
+
     @AttributeDefinition(name = "Synchronize User Attributes",
             description="Map of attributes from SAML Response to Synchronize. For example, urn:oid:1.2.840.113549.1.9.1=./profile/email saves this attribute if it exists under the users profile node with the property name 'email' ")
     String[] syncAttrs() default {};

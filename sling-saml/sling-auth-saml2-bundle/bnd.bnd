@@ -6,5 +6,36 @@ Jaas-ModuleClass: org.apache.sling.auth.saml2.sp.Saml2LoginModule
 -noextraheaders: true
 -removeheaders: Include-Resource, Private-Package
 Import-Package:\
+!com.beust*,\
 !javax.annotation*,\
+!javax.xml.bind.*,\
+!org.apache.velocity.*,\
+!org.apache.xml.dtm.*,\
+!org.apache.xml.utils.*,\
+!org.apache.xpath.*,\
+!org.bouncycastle.*,\
+!sun.misc,\
+!com.google.apphosting*,\
+!com.google.appengine.api*,\
 *
+-includeresource:\
+guava-[0-9\.]+-jre.jar;lib:=true,\
+failureaccess-[0-9\.]+.jar;lib:=true,\
+checker-qual-[0-9\.]+.jar;lib:=true,\
+error_prone_annotations-[0-9\.]+.jar;lib:=true,\
+opensaml-core-[0-9\.]+.jar;lib:=true,\
+opensaml-saml-impl-[0-9\.]+.jar;lib:=true,\
+opensaml-saml-api-[0-9\.]+.jar;lib:=true,\
+opensaml-xmlsec-api-[0-9\.]+.jar;lib:=true,\
+opensaml-xmlsec-impl-[0-9\.]+.jar;lib:=true,\
+opensaml-security-api-[0-9\.]+.jar;lib:=true,\
+opensaml-security-impl-[0-9\.]+.jar;lib:=true,\
+opensaml-storage-api-[0-9\.]+.jar;lib:=true,\
+opensaml-profile-api-[0-9\.]+.jar;lib:=true,\
+opensaml-messaging-api-[0-9\.]+.jar;lib:=true,\
+opensaml-soap-api-[0-9\.]+.jar;lib:=true,\
+opensaml-soap-impl-[0-9\.]+.jar;lib:=true,\
+java-support-[0-9\.]+.jar;lib:=true,\
+cryptacular-[0-9\.]+.jar;lib:=true,\
+metrics-core-[0-9\.]+.jar;lib:=true,\
+xmlsec-[0-9\.]+.jar;lib:=true

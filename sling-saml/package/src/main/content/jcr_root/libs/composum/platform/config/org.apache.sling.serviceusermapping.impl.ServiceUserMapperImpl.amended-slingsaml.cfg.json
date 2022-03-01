@@ -1,0 +1,6 @@
+{
+  "service.ranking":1000,
+  "user.mapping":[
+    "org.apache.sling.auth.saml2:Saml2UserMgtService=[composum-platform-slingsaml]"
+  ]
+}

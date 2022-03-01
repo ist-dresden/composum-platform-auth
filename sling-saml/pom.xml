@@ -16,9 +16,9 @@
     <description>Maven parent for Composum Platform Auth Sling adoption</description>
 
     <modules>
-        <module>opensaml-bundle</module>
         <module>sling-auth-saml2-bundle</module>
-        <module>sling-auth-saml2-package</module>
+        <module>setup</module>
+        <module>package</module>
     </modules>
 
     <dependencyManagement>
@@ -35,6 +35,13 @@
                 <groupId>org.opensaml</groupId>
                 <artifactId>opensaml-bundle</artifactId>
                 <version>4.0.1</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.jackrabbit</groupId>
+                <artifactId>oak-auth-external</artifactId>
+                <version>1.42.0</version>
                 <scope>provided</scope>
             </dependency>
 

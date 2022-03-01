@@ -22,6 +22,7 @@ package org.apache.sling.auth.saml2.impl;
 
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 import net.shibboleth.utilities.java.support.xml.ParserPool;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.security.user.User;
 import org.apache.sling.auth.core.AuthUtil;
 import org.apache.sling.auth.core.spi.AuthenticationHandler;
@@ -85,6 +86,8 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.metatype.annotations.Designate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nonnull;
 import javax.jcr.RepositoryException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -475,9 +478,11 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
         for (Attribute attribute : assertion.getAttributeStatements().get(0).getAttributes()) {
             if (attribute.getName().equals(this.getSaml2userIDAttr())) {
                 setUserId(attribute, saml2User);
-            } else if (attribute.getName().equals(this.getSaml2groupMembershipAttr())) {
+            }
+            if (attribute.getName().equals(this.getSaml2groupMembershipAttr())) {
                 setGroupMembership(attribute, saml2User);
-            } else if (this.getSyncAttrMap() != null && this.getSyncAttrMap().containsKey(attribute.getName())){
+            }
+            if (this.getSyncAttrMap() != null && this.getSyncAttrMap().containsKey(attribute.getName())){
                 syncUserAttributes(attribute, saml2User, this.getSyncAttrMap().get(attribute.getName()));
             }
         }
@@ -512,12 +517,13 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
         }
     }
 
-    private void setGroupMembership(Attribute attribute, Saml2User saml2User) {
+    private void setGroupMembership(@Nonnull final Attribute attribute, @Nonnull final Saml2User saml2User) {
         logger.debug("group attr name: {}", attribute.getName());
-        for (XMLObject attributeValue : attribute.getAttributeValues()) {
-            if ( ((XSString) attributeValue).getValue() != null ) {
-                saml2User.addGroupMembership( ((XSString) attributeValue).getValue());
-                logger.debug("managed group {} added: ", ((XSString) attributeValue).getValue());
+        for (final XMLObject attributeValue : attribute.getAttributeValues()) {
+            final String groupId = ((XSString) attributeValue).getValue();
+            if (StringUtils.isNotBlank(groupId) && getSyncGroups().contains(groupId)) {
+                saml2User.addGroupMembership(groupId);
+                logger.debug("managed group {} added: ", groupId);
             }
         }
     }

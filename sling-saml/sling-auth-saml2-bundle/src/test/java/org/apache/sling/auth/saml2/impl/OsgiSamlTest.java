@@ -126,7 +126,7 @@ public class OsgiSamlTest {
         assertEquals("/sp/consumer",samlHandler.getAcsPath());
         assertEquals("/home/users/saml",samlHandler.getSaml2userHome());
         assertEquals(null,samlHandler.getSaml2groupMembershipAttr());
-        assertTrue(samlHandler.getSyncAttrs().length == 0);
+        assertTrue(samlHandler.getSyncAttrs().size() == 0);
         assertEquals("saml2AuthInfo",samlHandler.getSaml2SessionAttr());
         assertEquals("http://localhost:8080/idp/profile/SAML2/Redirect/SSO", samlHandler.getSaml2IDPDestination());
         assertEquals("https://sling.apache.org/", samlHandler.getSaml2LogoutURL());

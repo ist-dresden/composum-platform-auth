@@ -45,6 +45,32 @@
         </resources>
         <plugins>
 
+            <!-- embed the setup hook -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-bundles</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>${project.groupId}</groupId>
+                                    <artifactId>composum-platform-sling-saml-setup</artifactId>
+                                    <outputDirectory>${project.build.directory}/vault-work/META-INF/vault/hooks</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+                <inherited>false</inherited>
+            </plugin>
+
             <plugin>
                 <groupId>com.day.jcr.vault</groupId>
                 <artifactId>content-package-maven-plugin</artifactId>
@@ -57,11 +83,26 @@
 
                     <filters>
                         <filter>
+                            <root>/conf/composum/platform/slingsaml</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/composum/platform/config</root>
+                            <includes>
+                                <include>.*/.*\.serviceusermapping\..*\.amended-slingsaml\.cfg\.json</include>
+                            </includes>
+                        </filter>
+                        <filter>
+                            <root>/libs/composum/platform/config.local</root>
+                            <includes>
+                                <include>.*/.*\.saml2\.AuthenticationHandlerSAML2~keycloak\.cfg\.json</include>
+                            </includes>
+                        </filter>
+                        <filter>
                             <root>/libs/composum/platform/install</root>
                             <includes>
-                                <include>.*/opensaml-bundle.*\.jar</include>
                                 <include>.*/org\.apache\.sling\.auth\.saml2.*\.jar</include>
-                                <include>.*/.*\.serviceusermapping\..*\.amended-slingsaml.config</include>
+                                <include>.*/opensaml-bundle.*\.jar</include>
+                                <include>.*/oak-auth-external.*\.jar</include>
                             </includes>
                         </filter>
                     </filters>
@@ -73,8 +114,8 @@
                             <target>/libs/composum/platform/install</target>
                         </embedded>
                         <embedded>
-                            <groupId>org.opensaml</groupId>
-                            <artifactId>opensaml-bundle</artifactId>
+                            <groupId>org.apache.jackrabbit</groupId>
+                            <artifactId>oak-auth-external</artifactId>
                             <target>/libs/composum/platform/install</target>
                         </embedded>
                     </embeddeds>
@@ -87,13 +128,19 @@
     <dependencies>
 
         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>composum-platform-sling-saml-setup</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.auth.saml2</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>org.opensaml</groupId>
-            <artifactId>opensaml-bundle</artifactId>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>oak-auth-external</artifactId>
         </dependency>
 
     </dependencies>

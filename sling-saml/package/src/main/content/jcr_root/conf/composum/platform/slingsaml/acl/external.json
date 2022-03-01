@@ -1,0 +1,33 @@
+[
+  {
+    "path": [
+      "/",
+      "/var",
+      "/var/composum"
+    ],
+    "jcr:primaryType": "sling:Folder",
+    "acl": {
+      "principal": "composum-platform-user",
+      "rule": {
+        "grant": "jcr:read",
+        "restrictions": {
+          "rep:glob": ""
+        }
+      }
+    }
+  },
+  {
+    "path": [
+      "/apps",
+      "/libs",
+      "/var/composum/clientlibs"
+    ],
+    "jcr:primaryType": "sling:Folder",
+    "acl": {
+      "principal": "composum-platform-user",
+      "rule": {
+        "grant": "jcr:read"
+      }
+    }
+  }
+]
