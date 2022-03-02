@@ -9,7 +9,9 @@
 
 ## Apache Sling
 
-### config.local (/libs/composum/platform/config.local)
+OSGi configuration: config.local (/libs/composum/platform/config.local)
+
+### Authentication Handler
 
 org.apache.sling.auth.saml2.AuthenticationHandlerSAML2~keycloak.cfg.json
 ```json
@@ -18,17 +20,6 @@ org.apache.sling.auth.saml2.AuthenticationHandlerSAML2~keycloak.cfg.json
   "service.ranking:Integer": 300,
   "entityID": "http://localhost:9080/",
   "acsPath": "/auth/saml",
-  "saml2userIDAttr": "urn:oid:1.2.840.113549.1.9.1",
-  "saml2userHome": "/home/users/external{/domain/}",
-  "saml2groupMembershipAttr": "group",
-  "syncGroups": [
-    "composum-platform-external"
-  ],
-  "syncAttrs": [
-    "urn:oid:1.2.840.113549.1.9.1=./profile/email",
-    "urn:oid:2.5.4.42=./profile/givenName",
-    "urn:oid:2.5.4.4=./profile/familyName"
-  ],
   "saml2SessionAttr": "saml2AuthInfo",
   "saml2IDPDestination": "http://localhost:7070/realms/local/protocol/saml",
   "saml2LogoutURL": "http://localhost:7070/realms/local/protocol/saml",
@@ -39,6 +30,25 @@ org.apache.sling.auth.saml2.AuthenticationHandlerSAML2~keycloak.cfg.json
   "idpCertAlias": "",
   "spKeysAlias": "",
   "spKeysPassword": ""
+}
+```
+
+### User Mapping Service
+
+org.apache.sling.auth.saml2.Saml2UserMgtService~keycloak.cfg.json
+```json
+{
+  "saml2userIDAttr": "urn:oid:1.2.840.113549.1.9.1",
+  "saml2userHome": "/home/users/external{/domain/}",
+  "saml2groupMembershipAttr": "group",
+  "syncGroups": [
+    "composum-platform-external"
+  ],
+  "syncAttrs": [
+    "urn:oid:1.2.840.113549.1.9.1=./profile/email",
+    "urn:oid:2.5.4.42=./profile/givenName",
+    "urn:oid:2.5.4.4=./profile/familyName"
+  ]
 }
 ```
 
