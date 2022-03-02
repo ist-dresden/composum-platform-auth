@@ -23,11 +23,6 @@ package org.apache.sling.auth.saml2.impl;
 import org.apache.sling.auth.core.spi.DefaultAuthenticationFeedbackHandler;
 import org.apache.sling.auth.saml2.AuthenticationHandlerSAML2Config;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 abstract class AbstractSamlHandler extends DefaultAuthenticationFeedbackHandler {
 
     // OSGI Configs
@@ -36,9 +31,6 @@ abstract class AbstractSamlHandler extends DefaultAuthenticationFeedbackHandler 
     private String saml2IDPDestination;
     private boolean saml2SPEnabled = false;
     private boolean saml2SPEncryptAndSign = false;
-    private String uidAttrName;
-    private String samlUserHome;
-    private String groupMembershipName;
     private String entityID;
     private String jksFileLocation;
     private String jksStorePassword;
@@ -46,11 +38,8 @@ abstract class AbstractSamlHandler extends DefaultAuthenticationFeedbackHandler 
     private String spKeysPassword;
     private String idpCertAlias;
     private String acsPath;
-    private List<String> syncGroups;
-    private List<String> syncAttrs;
     private String saml2LogoutURL;
     private String postLogoutRedirect;
-    private Map<String,String> syncAttrMap;
 
     public static final String GOTO_URL_SESSION_ATTRIBUTE = "gotoURL";
     public static final String SAML2_REQUEST_ID = "saml2RequestID";
@@ -62,10 +51,6 @@ abstract class AbstractSamlHandler extends DefaultAuthenticationFeedbackHandler 
         this.saml2SPEnabled = config.saml2SPEnabled();
         this.saml2SPEncryptAndSign = config.saml2SPEncryptAndSign();
         this.saml2IDPDestination = config.saml2IDPDestination();
-        this.uidAttrName = config.saml2userIDAttr();
-        this.samlUserHome = config.saml2userHome();
-        this.groupMembershipName = config.saml2groupMembershipAttr();
-        this.syncGroups = Arrays.asList(config.syncGroups());
         this.entityID = config.entityID();
         this.jksFileLocation = config.jksFileLocation();
         this.jksStorePassword = config.jksStorePassword();
@@ -73,27 +58,13 @@ abstract class AbstractSamlHandler extends DefaultAuthenticationFeedbackHandler 
         this.spKeysPassword = config.spKeysPassword();
         this.idpCertAlias = config.idpCertAlias();
         this.acsPath = config.acsPath();
-        this.syncAttrs = Arrays.asList(config.syncAttrs());
         this.saml2LogoutURL = config.saml2LogoutURL();
         this.postLogoutRedirect = config.postLogoutRedirect();
-        setSyncMap();
     }
 
 //    GETTERS
     String getSaml2Path() {
         return this.path;
-    }
-    String getSaml2userIDAttr() {
-        return this.uidAttrName;
-    }
-    String getSaml2userHome() {
-        return this.samlUserHome;
-    }
-    String getSaml2groupMembershipAttr() {
-        return this.groupMembershipName;
-    }
-    List<String> getSyncGroups() {
-        return this.syncGroups;
     }
     String getSaml2SessionAttr() {
         return this.saml2SessAttr;
@@ -134,23 +105,9 @@ abstract class AbstractSamlHandler extends DefaultAuthenticationFeedbackHandler 
     String getIdpCertAlias() {
         return this.idpCertAlias;
     }
-    List<String> getSyncAttrs() {
-        return this.syncAttrs;
-    }
-    Map<String,String> getSyncAttrMap(){ return this.syncAttrMap; }
 
     String getACSURL() {
         final String domain = entityID.endsWith("/") ? entityID.substring(0, entityID.length()-1) : entityID;
         return domain + this.getAcsPath();
-    }
-
-    void setSyncMap(){
-        this.syncAttrMap = new HashMap<>();
-        for(String attr : getSyncAttrs()){
-            String[] parts = attr.split("=");
-            if(parts != null && parts.length==2){
-                this.syncAttrMap.put(parts[0],parts[1]);
-            }
-        }
     }
 }

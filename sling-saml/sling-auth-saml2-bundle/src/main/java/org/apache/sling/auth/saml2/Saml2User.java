@@ -21,31 +21,38 @@ package org.apache.sling.auth.saml2;
 
 import org.opensaml.core.xml.XMLObject;
 import org.opensaml.core.xml.schema.XSString;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 public class Saml2User {
-    private String id;
-    private HashMap<String,String> userProperties;
-    private HashSet<String> groupMembership;
 
-    public Saml2User(){
+    private String id;
+    private final HashMap<String, String> userProperties;
+    private final HashSet<String> groupMembership;
+
+    public Saml2User() {
         userProperties = new HashMap<>();
         groupMembership = new HashSet<>();
     }
 
-    public Saml2User(String id){
+    public Saml2User(String id) {
         this();
         this.id = id;
+    }
+
+    @Override
+    public String toString() {
+        return getId();
     }
 
     public String getId() {
         return id;
     }
 
-    public Map<String,String> getUserProperties() {
+    public Map<String, String> getUserProperties() {
         return userProperties;
     }
 

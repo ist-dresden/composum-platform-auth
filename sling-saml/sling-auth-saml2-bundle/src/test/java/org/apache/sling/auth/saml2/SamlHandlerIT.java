@@ -21,7 +21,6 @@ package org.apache.sling.auth.saml2;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
-import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
@@ -53,6 +52,7 @@ import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.http.HttpService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -63,10 +63,10 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Iterator;
 import java.util.List;
+
 import static org.apache.sling.auth.core.spi.AuthenticationHandler.REQUEST_LOGIN_PARAMETER;
 import static org.apache.sling.auth.saml2.impl.JKSHelper.IDP_ALIAS;
 import static org.apache.sling.auth.saml2.impl.JKSHelper.SP_ALIAS;
@@ -126,9 +126,6 @@ public class SamlHandlerIT extends TestSupport {
     @Inject
     @Filter(value = "(saml2SPEncryptAndSign=true)")
     AuthenticationHandler authHandlerEnc;
-
-    @Inject
-    Saml2UserMgtService saml2UserMgtService;
 
     @Configuration
     public Option[] configuration() {
@@ -298,13 +295,11 @@ public class SamlHandlerIT extends TestSupport {
         } catch (RepositoryException | LoginException e) {
             fail(e.getMessage());
         }
-        saml2UserMgtService.setUp();
     }
 
     @After
     public void after(){
         resourceResolver.close();
-        saml2UserMgtService.cleanUp();
         session = null;
         jrSession = null;
         userManager = null;
@@ -317,7 +312,6 @@ public class SamlHandlerIT extends TestSupport {
         assertNotNull(authenticationSupport);
         assertNotNull(httpService);
         assertNotNull(resolverFactory);
-        assertNotNull(saml2UserMgtService);
         assertNotNull(authHandler);
         assertNotNull(authHandlerEnc);
         logBundles();
@@ -327,64 +321,6 @@ public class SamlHandlerIT extends TestSupport {
     public void test_samlBundleActive(){
         Bundle samlBundle = findBundle("org.apache.sling.auth.saml2");
         assertEquals(Bundle.ACTIVE, samlBundle.getState());
-    }
-
-    @Test
-    public void test_userServiceSetup(){
-        assertTrue(saml2UserMgtService.setUp());
-    }
-
-    @Test
-    public void test_getOrCreateSamlUser(){
-        saml2UserMgtService.setUp();
-        Saml2User saml2User = new Saml2User();
-        saml2User.setId("example-saml");
-        User user = saml2UserMgtService.getOrCreateSamlUser(saml2User);
-        assertNotNull(user);
-        assertTrue(saml2UserMgtService.updateUserProperties(saml2User));
-        try {
-            user.getPath().startsWith("/home/users/saml");
-        } catch (RepositoryException e) {
-            fail(e.getMessage());
-        }
-        saml2UserMgtService.cleanUp();
-    }
-
-    @Test
-    public void test_createSamlUserWithHomePath(){
-        saml2UserMgtService.setUp();
-        Saml2User saml2User = new Saml2User();
-        saml2User.setId("example-saml");
-        User user = saml2UserMgtService.getOrCreateSamlUser(saml2User,"/home/users/mypath");
-        assertNotNull(user);
-        try {
-            user.getPath().startsWith("/home/users/mypath");
-        } catch (RepositoryException e) {
-            fail(e.getMessage());
-        }
-        saml2UserMgtService.cleanUp();
-    }
-
-    @Test
-    public void test_groupMembership(){
-        saml2UserMgtService.setUp();
-        Saml2User saml2User = new Saml2User();
-        saml2User.setId("example-saml");
-        saml2User.addGroupMembership("sling-authors");
-        assertTrue(saml2UserMgtService.updateGroupMembership(saml2User));
-        try {
-            Authorizable user = userManager.getAuthorizable("example-saml");
-            Group group = (Group) userManager.getAuthorizable("sling-authors");
-            // confirm that group sling-authors now has a property called managedGroup set to true
-            assertTrue(group.isMember(user));
-            // confirm that group sling-authors now has a member example-saml
-            assertTrue(group.hasProperty("managedGroup"));
-            // and is a managed group
-            assertTrue(Arrays.stream(group.getProperty("managedGroup")).anyMatch(value -> true));
-        } catch (RepositoryException e) {
-            fail(e.getMessage());
-        }
-        saml2UserMgtService.cleanUp();
     }
 
     @Test

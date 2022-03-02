@@ -21,9 +21,11 @@
 package org.apache.sling.auth.saml2.impl;
 
 import org.apache.commons.lang3.StringUtils;
+
 import java.security.Principal;
 
 class SimplePrincipal implements Principal {
+
     protected final String name;
 
     public SimplePrincipal(String name) {
@@ -48,5 +50,10 @@ class SimplePrincipal implements Principal {
             return name.equals(((Principal) obj).getName());
         }
         return false;
+    }
+
+    @Override
+    public String toString() {
+        return getName();
     }
 }

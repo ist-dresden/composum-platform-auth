@@ -15,56 +15,31 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- *
  */
-
 package org.apache.sling.auth.saml2;
 
 import org.apache.jackrabbit.api.security.user.User;
+import org.opensaml.saml.saml2.core.Assertion;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public interface Saml2UserMgtService {
 
     /**
-     * Call setUp before using any other Saml2UserMgtService method
-     * Setup initializes service resolver and called before each use
-     * @return returns true if setup is successful
+     * Extracts all useful attributes from the given SAML2 assertion and applies these attributes to the SAML user.
+     *
+     * @param assertion the SAML2 assertion object
+     * @param samlUser  the SAML user to update
      */
-    boolean setUp();
+    void applySaml2Attributes(@Nonnull Assertion assertion, @Nonnull Saml2User samlUser);
 
     /**
-     * getOrCreateSamlUser(Saml2User user) will be called if userHome is not configured
-     * @param user creates the JCR user in the default /home location
-     * @return returns the existing or new JCR user
+     * Makes all user properties if the given SAML user persistent.
+     *
+     * @param samlUser the prepared SAML user with all information to synchronize
+     * @return the JCR user of the given SAML user
      */
-    User getOrCreateSamlUser(Saml2User user);
-    
-    /**
-     * getOrCreateSamlUser(Saml2User user) will be called if userHome is configured
-     * @param user gets or creates the JCR user in supplied userHome path
-     * @param userHome is the supplied path under which to find or create the user
-     * @return returns the existing or new JCR user
-     */
-    User getOrCreateSamlUser(Saml2User user, String userHome);
-    
-    /**
-     * Users group membership will be updated based on the groups contained in the 
-     * configured element of the SAML Assertion
-     * @param user to update membership
-     * @return returns true if the user's group membership was updated
-     */
-    boolean updateGroupMembership(Saml2User user);
-
-    /**
-     * Users properties will be updated based on user properties contained in the 
-     * configured properties of the SAML Assertion
-     * @param user to update properties
-     * @return returns true if the user properties were updated 
-     */
-    boolean updateUserProperties(Saml2User user);
-    
-    /**
-     * Call cleanUp after using Saml2UserMgtService methods
-     * This should be called after using the service to close out the service resolver
-     */
-    void cleanUp();
+    @Nullable
+    User performUserSynchronization(@Nonnull final Saml2User samlUser);
 }

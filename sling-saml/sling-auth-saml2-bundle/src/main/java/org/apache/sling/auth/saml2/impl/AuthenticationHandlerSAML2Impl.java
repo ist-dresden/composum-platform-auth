@@ -37,9 +37,7 @@ import org.apache.sling.auth.saml2.sp.KeyPairCredentials;
 import org.apache.sling.auth.saml2.sp.SamlReason;
 import org.apache.sling.auth.saml2.sp.SessionStorage;
 import org.apache.sling.auth.saml2.sp.VerifySignatureCredentials;
-import org.opensaml.core.xml.XMLObject;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
-import org.opensaml.core.xml.schema.XSString;
 import org.opensaml.messaging.context.MessageContext;
 import org.opensaml.messaging.decoder.MessageDecodingException;
 import org.opensaml.messaging.encoder.MessageEncodingException;
@@ -50,7 +48,6 @@ import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.saml2.binding.decoding.impl.HTTPPostDecoder;
 import org.opensaml.saml.saml2.binding.encoding.impl.HTTPRedirectDeflateEncoder;
 import org.opensaml.saml.saml2.core.Assertion;
-import org.opensaml.saml.saml2.core.Attribute;
 import org.opensaml.saml.saml2.core.AuthnRequest;
 import org.opensaml.saml.saml2.core.EncryptedAssertion;
 import org.opensaml.saml.saml2.core.Issuer;
@@ -88,6 +85,8 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.metatype.annotations.Designate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -125,8 +124,8 @@ import static org.opensaml.saml.saml2.core.LogoutRequest.USER_REASON;
 @Designate(ocd = AuthenticationHandlerSAML2Config.class, factory = true)
 public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implements AuthenticationHandlerSAML2 {
 
-    @Reference
-    private Saml2UserMgtService saml2UserMgtService;
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.DYNAMIC)
+    private volatile Saml2UserMgtService saml2UserMgtService;
     public static final String AUTH_STORAGE_SESSION_TYPE = "session";
     public static final String AUTH_TYPE = "SAML2";
     static final String TOKEN_FILENAME = "saml2-cookie-tokens.bin";
@@ -215,7 +214,7 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
         if (reqURI.equals(this.getAcsPath())) {
             return processAssertionConsumerService(httpServletRequest);
         }
-// 1a. If the request to the derived ACS logout URL the logout cycle should be finalized
+// 1a. If it's a request to the derived ACS logged out URL the logout cycle should be finalized
         if (reqURI.equals(this.getAcsPath() + "/loggedout")) {
             final String redirectUrl = getPostLogoutRedirect();
             if (StringUtils.isNotBlank(redirectUrl) && !httpServletResponse.isCommitted())
@@ -523,74 +522,17 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
         if (assertion == null ||
                 assertion.getAttributeStatements().isEmpty() ||
                 assertion.getAttributeStatements().get(0).getAttributes().isEmpty()) {
-            logger.warn("SAML Assertion Attribute Statement or Attributes was null ");
+            logger.warn("SAML Assertion Attribute Statement or Attributes was null.");
             return null;
         }
-        // start a user object
-        Saml2User saml2User = new Saml2User();
-
-        // iterate the attribute assertions
-        for (Attribute attribute : assertion.getAttributeStatements().get(0).getAttributes()) {
-            if (attribute.getName().equals(this.getSaml2userIDAttr())) {
-                setUserId(attribute, saml2User);
-            }
-            if (attribute.getName().equals(this.getSaml2groupMembershipAttr())) {
-                setGroupMembership(attribute, saml2User);
-            }
-            if (this.getSyncAttrMap() != null && this.getSyncAttrMap().containsKey(attribute.getName())) {
-                syncUserAttributes(attribute, saml2User, this.getSyncAttrMap().get(attribute.getName()));
-            }
+        if (saml2UserMgtService != null) {
+            // build and synchronize a user object
+            final Saml2User saml2User = new Saml2User();
+            saml2UserMgtService.applySaml2Attributes(assertion, saml2User);
+            return saml2UserMgtService.performUserSynchronization(saml2User);
         }
-
-        boolean setUpOk = saml2UserMgtService.setUp();
-        if (setUpOk && saml2User != null && saml2User.getId() != null) {
-            User samlUser;
-            if (Objects.nonNull(getSaml2userHome()) && !getSaml2userHome().isEmpty()) {
-                samlUser = saml2UserMgtService.getOrCreateSamlUser(saml2User, this.getSaml2userHome());
-            } else {
-                samlUser = saml2UserMgtService.getOrCreateSamlUser(saml2User);
-            }
-
-            saml2UserMgtService.updateGroupMembership(saml2User);
-            saml2UserMgtService.updateUserProperties(saml2User);
-            return samlUser;
-        } else if (saml2User != null && saml2User.getId() == null) {
-            saml2UserMgtService.cleanUp();
-            throw new SAML2RuntimeException("SAML2 User ID attribute name (saml2userIDAttr) is not correctly configured.");
-        }
-        saml2UserMgtService.cleanUp();
+        logger.warn("No SAML user management service bound.");
         return null;
-    }
-
-    private void setUserId(Attribute attribute, Saml2User saml2User) {
-        logger.debug("username attr name: {}", attribute.getName());
-        for (XMLObject attributeValue : attribute.getAttributeValues()) {
-            if (((XSString) attributeValue).getValue() != null) {
-                saml2User.setId(((XSString) attributeValue).getValue());
-                logger.debug("username value: {}", saml2User.getId());
-            }
-        }
-    }
-
-    private void setGroupMembership(@Nonnull final Attribute attribute, @Nonnull final Saml2User saml2User) {
-        logger.debug("group attr name: {}", attribute.getName());
-        for (final XMLObject attributeValue : attribute.getAttributeValues()) {
-            final String groupId = ((XSString) attributeValue).getValue();
-            if (StringUtils.isNotBlank(groupId) && getSyncGroups().contains(groupId)) {
-                saml2User.addGroupMembership(groupId);
-                logger.debug("managed group {} added: ", groupId);
-            }
-        }
-    }
-
-    private void syncUserAttributes(Attribute attribute, Saml2User saml2User, String propertyName) {
-        for (XMLObject attributeValue : attribute.getAttributeValues()) {
-            if (((XSString) attributeValue).getValue() != null) {
-                saml2User.addUserProperty(propertyName, attributeValue);
-                logger.debug("sync attr name: {}", propertyName);
-                logger.debug("attribute value: {}", ((XSString) attributeValue).getValue());
-            }
-        }
     }
 
     AuthenticationInfo buildAuthInfo(final User user) {

@@ -20,7 +20,8 @@ package org.apache.sling.auth.saml2.impl;
 import javax.jcr.Credentials;
 
 public class Saml2Credentials implements Credentials {
-    private String userId;
+
+    private final String userId;
 
     public Saml2Credentials(String userId) {
         this.userId = userId;

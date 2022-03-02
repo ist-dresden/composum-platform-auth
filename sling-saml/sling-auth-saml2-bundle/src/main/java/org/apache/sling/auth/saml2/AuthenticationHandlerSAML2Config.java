@@ -49,26 +49,6 @@ public @interface AuthenticationHandlerSAML2Config {
         description="Service Provider's Assertion Consumer Service Path")
     String acsPath() default "/sp/consumer";
 
-    @AttributeDefinition(name = "User ID (uid) Attribute Name",
-        description="Name of the attribute holding the users unique id")
-    String saml2userIDAttr() default "username";
-
-    @AttributeDefinition(name = "Path for SAML2 Users",
-        description="Home path for SAML2 Users")
-    String saml2userHome() default "/home/users/saml";
-
-    @AttributeDefinition(name = "groupMembership Attribute Name",
-        description="Name of the attribute holding the users' group memberships")
-    String saml2groupMembershipAttr() default "";
-
-    @AttributeDefinition(name = "Synchronized Groups",
-            description="the set of group names / identifiers mapped from external identity provider")
-    String[] syncGroups() default {};
-
-    @AttributeDefinition(name = "Synchronize User Attributes",
-            description="Map of attributes from SAML Response to Synchronize. For example, urn:oid:1.2.840.113549.1.9.1=./profile/email saves this attribute if it exists under the users profile node with the property name 'email' ")
-    String[] syncAttrs() default {};
-
     @AttributeDefinition(name = "SAML2 Session Attribute",
         description="Name used to save the users security context within a HTTP SESSION")
     String saml2SessionAttr() default "saml2AuthInfo";
