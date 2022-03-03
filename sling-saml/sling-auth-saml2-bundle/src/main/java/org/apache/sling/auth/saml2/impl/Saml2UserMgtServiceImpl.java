@@ -97,6 +97,7 @@ public class Saml2UserMgtServiceImpl implements Saml2UserMgtService {
 
     // prepare / collect
 
+    @Override
     public void applySaml2Attributes(@Nonnull final Assertion assertion, @Nonnull final Saml2User samlUser) {
         for (Attribute attribute : assertion.getAttributeStatements().get(0).getAttributes()) {
             applyUserId(attribute, samlUser);
@@ -149,6 +150,7 @@ public class Saml2UserMgtServiceImpl implements Saml2UserMgtService {
 
     // perform
 
+    @Override
     public User performUserSynchronization(@Nonnull final Saml2User samlUser) {
         User user = null;
         final String userId = samlUser.getId();

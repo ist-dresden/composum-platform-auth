@@ -85,8 +85,6 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceCardinality;
-import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.metatype.annotations.Designate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -124,8 +122,8 @@ import static org.opensaml.saml.saml2.core.LogoutRequest.USER_REASON;
 @Designate(ocd = AuthenticationHandlerSAML2Config.class, factory = true)
 public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implements AuthenticationHandlerSAML2 {
 
-    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.DYNAMIC)
-    private volatile Saml2UserMgtService saml2UserMgtService;
+    @Reference
+    private Saml2UserMgtService saml2UserMgtService;
     public static final String AUTH_STORAGE_SESSION_TYPE = "session";
     public static final String AUTH_TYPE = "SAML2";
     static final String TOKEN_FILENAME = "saml2-cookie-tokens.bin";
