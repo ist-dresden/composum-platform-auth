@@ -2,13 +2,13 @@
     --cpm--default-text-color: #666;
     --cpm--default-dark--200: #777973; /* #737679 */
     --cpm--default-color--100: #9c7; /* #73c5c5 */
-    --cpm--default-color--200: #5a0; /* #009596 */
+    --cpm--default-color--200: #5a4; /* #009596 */
     --cpm--default-color--300: #1e3700; /* #003737 */
-    --cpm--primary-color--100: #5c0; /* #06c */
-    --cpm--primary-color--200: #558000; /* #004080 */
-    --cpm--active-color--200: #cfb; /* #bee1f4 */
-    --cpm--active-color--300: #af7; /* #73bcf7 */
-    --cpm--active-color--400: #8f3; /* #2b9af3 */
+    --cpm--primary-color--100: #493; /* #06c */
+    --cpm--primary-color--200: #382; /* #004080 */
+    --cpm--active-color--200: #f1fdeb; /* #bee1f4 */
+    --cpm--active-color--300: #d6f3c3; /* #73bcf7 */
+    --cpm--active-color--400: #d7efcf; /* #2b9af3 */
     --pf-global--Color--dark-200: var(--cpm--default-dark--200);
     --pf-global--active-color--100: var(--cpm--primary-color--100);
     --pf-global--active-color--200: var(--cpm--active-color--200);
@@ -43,6 +43,7 @@
 
 .composum body {
     background-size: auto;
+    background-color: #fafff4;
     background-position: 60% 10%;
 }
 
@@ -60,5 +61,33 @@
 }
 
 .composum .login-pf-page .card-pf {
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(200, 230, 190, 0.8);
+}
+
+.composum #kc-info-wrapper {
+    background-color: var(--cpm--active-color--400);
+}
+
+.composum a#kc-current-locale-link::after {
+    content: "\25bc";
+}
+
+.composum .login-pf-settings a,
+.composum #kc-form-options a,
+.composum #kc-registration a {
+    font-weight: bold;
+}
+
+.composum .pf-c-form-control {
+    background-color: var(--cpm--active-color--200) !important;
+    outline: var(--cpm--primary-color--200);
+}
+
+@media (max-width: 767px) {
+
+    .composum #kc-header-wrapper {
+        font-size: 24px;
+        font-weight: normal;
+        color: var(--cpm--default-text-color);
+    }
 }

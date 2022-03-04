@@ -1,14 +1,16 @@
 .composum {
-    --cpm--default-text-color: #666;
-    --cpm--default-dark--200: #777973; /* #737679 */
-    --cpm--default-color--100: #9c7; /* #73c5c5 */
-    --cpm--default-color--200: #5a0; /* #009596 */
-    --cpm--default-color--300: #1e3700; /* #003737 */
-    --cpm--primary-color--100: #5c0; /* #06c */
-    --cpm--primary-color--200: #558000; /* #004080 */
-    --cpm--active-color--200: #cfb; /* #bee1f4 */
-    --cpm--active-color--300: #af7; /* #73bcf7 */
-    --cpm--active-color--400: #8f3; /* #2b9af3 */
+    --cpm--default-text-color: #eee;
+    --cpm--default-dark--200: #737379; /* #737679 */
+    --cpm--default-dark--300: #3d3d42;
+    --cpm--default-color--100: #7673c5; /* #73c5c5 */
+    --cpm--default-color--200: #050096; /* #009596 */
+    --cpm--default-color--300: #040037; /* #003737 */
+    --cpm--primary-color--100: #0003cc; /* #06c */
+    --cpm--primary-color--200: #001180; /* #004080 */
+    --cpm--active-color--200: #e8ebff; /* #bee1f4 */
+    --cpm--active-color--300: #b1b4ff; /* #73bcf7 */
+    --cpm--active-color--400: #646fff; /* #2b9af3 */
+    --pf-global--Color--200: var(--cpm--default-dark--300);
     --pf-global--Color--dark-200: var(--cpm--default-dark--200);
     --pf-global--active-color--100: var(--cpm--primary-color--100);
     --pf-global--active-color--200: var(--cpm--active-color--200);
@@ -43,6 +45,7 @@
 
 .composum body {
     background-size: auto;
+    background-color: #141414;
     background-position: 60% 10%;
 }
 
@@ -60,5 +63,31 @@
 }
 
 .composum .login-pf-page .card-pf {
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(200, 200, 240, 0.9);
+}
+
+.composum a#kc-current-locale-link::after {
+    content: "\25bc";
+}
+
+.composum .pf-c-form-control {
+    background-color: var(--cpm--active-color--200) !important;
+    outline: var(--cpm--primary-color--200);
+}
+
+.composum .login-pf-page .card-pf p {
+    color: var(--cpm--default-dark--300);
+}
+
+@media (max-width: 767px) {
+
+    .composum #kc-header-wrapper {
+        font-size: 24px;
+        font-weight: normal;
+        color: var(--cpm--default-text-color);
+    }
+
+    .composum #kc-locale-dropdown a {
+        color: var(--cpm--default-text-color);
+    }
 }

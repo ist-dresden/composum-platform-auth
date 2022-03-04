@@ -1,0 +1,16 @@
+{
+  "themes": [
+    {
+      "name": "composum",
+      "types": [
+        "login"
+      ]
+    },
+    {
+      "name": "composum-dark",
+      "types": [
+        "login"
+      ]
+    }
+  ]
+}
