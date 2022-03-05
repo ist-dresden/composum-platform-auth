@@ -22,6 +22,7 @@
 
 	<modules>
 		<module>sling-saml</module>
+		<module>keycloak/themes</module>
 		<module>selfmade</module>
 	</modules>
 
