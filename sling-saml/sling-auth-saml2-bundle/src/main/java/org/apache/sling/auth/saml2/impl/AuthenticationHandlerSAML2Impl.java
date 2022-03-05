@@ -94,6 +94,7 @@ import javax.annotation.Nullable;
 import javax.jcr.RepositoryException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -122,15 +123,19 @@ import static org.opensaml.saml.saml2.core.LogoutRequest.USER_REASON;
 @Designate(ocd = AuthenticationHandlerSAML2Config.class, factory = true)
 public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implements AuthenticationHandlerSAML2 {
 
-    @Reference
-    private Saml2UserMgtService saml2UserMgtService;
+    private static final Logger logger = LoggerFactory.getLogger(AuthenticationHandlerSAML2Impl.class);
+
+    static final String SERVICE_NAME = "org.apache.sling.auth.saml2.AuthenticationHandlerSAML2";
+
     public static final String AUTH_STORAGE_SESSION_TYPE = "session";
     public static final String AUTH_TYPE = "SAML2";
     static final String TOKEN_FILENAME = "saml2-cookie-tokens.bin";
+
+    @Reference
+    private Saml2UserMgtService saml2UserMgtService;
+
     private SessionStorage storageAuthInfo;
     long sessionTimeout;
-    private static Logger logger = LoggerFactory.getLogger(AuthenticationHandlerSAML2Impl.class);
-    static final String SERVICE_NAME = "org.apache.sling.auth.saml2.AuthenticationHandlerSAML2";
     private Credential spKeypair;
     private Credential idpVerificationCert;
 
@@ -257,6 +262,7 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
         Assertion assertion = null;
         boolean relayStateIsOk = validateRelayState(httpServletRequest, messageContext);
         // If relay state from request == relay state from session))
+        logger.debug("processAssertionConsumerService({})...", relayStateIsOk);
         if (relayStateIsOk) {
             Response response = (Response) messageContext.getMessage();
             if (this.getSaml2SPEncryptAndSign()) {
@@ -270,7 +276,9 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
             if (validateSaml2Conditions(httpServletRequest, assertion)) {
                 logger.debug("Decrypted Assertion: ");
                 User extUser = doUserManagement(assertion);
-                return this.buildAuthInfo(extUser);
+                if (extUser != null) {
+                    return this.buildAuthInfo(extUser);
+                }
             }
             logger.error("Validation of SubjectConfirmation failed");
         }
@@ -312,6 +320,10 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
 
         if (this.getSaml2SPEnabled()) {
             doClassloading();
+            HttpSession session = httpServletRequest.getSession(false);
+            if (session != null) {
+                session.invalidate(); // initiate login with a fresh session
+            }
             setGotoURLOnSession(httpServletRequest);
             redirectUserForAuthentication(httpServletRequest, httpServletResponse);
             return true;
@@ -388,8 +400,7 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
             throw new SAML2RuntimeException(e);
         }
 
-        logger.info("Request: {}", requestForIDP.getClass());
-        logger.info("Redirecting to IDP");
+        logger.debug("Redirecting to IDP: '{}'", requestForIDP.getID());
         try {
             encoder.encode();
         } catch (MessageEncodingException e) {
@@ -527,6 +538,7 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
             // build and synchronize a user object
             final Saml2User saml2User = new Saml2User();
             saml2UserMgtService.applySaml2Attributes(assertion, saml2User);
+            logger.debug("SAML2 user: '{}' ({},{})", saml2User, saml2User.getGroupMembership(), saml2User.getUserProperties());
             return saml2UserMgtService.performUserSynchronization(saml2User);
         }
         logger.warn("No SAML user management service bound.");
@@ -571,6 +583,7 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
         String reportedRelayState = bindingContext.getRelayState();
         SessionStorage relayStateStore = new SessionStorage(this.getSaml2SessionAttr());
         String savedRelayState = relayStateStore.getString(req);
+        logger.debug("validate relay state: '{}'=='{}'? ({})", reportedRelayState, savedRelayState, relayStateStore);
         if (savedRelayState == null || savedRelayState.isEmpty()) {
             return false;
         } else if (savedRelayState.equals(reportedRelayState)) {
@@ -802,5 +815,4 @@ public class AuthenticationHandlerSAML2Impl extends AbstractSamlHandler implemen
         }
         return tokenFile.getAbsoluteFile();
     }
-
 }
