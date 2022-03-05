@@ -1,7 +1,10 @@
 [
   {
     "path": [
-      "/"
+      "/",
+      "/home",
+      "/home/users",
+      "/home/groups"
     ],
     "acl": {
       "principal": "composum-platform-slingsaml",
@@ -15,8 +18,10 @@
   },
   {
     "path": [
-      "/home"
+      "/home/users/external",
+      "/home/groups/composum"
     ],
+    "jcr:primaryType": "rep:AuthorizableFolder",
     "acl": {
       "principal": "composum-platform-slingsaml",
       "rule": {

@@ -59,14 +59,17 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Component(
-        service = {Saml2UserMgtService.class}
+        service = {Saml2UserMgtService.class},
+        name = Saml2UserMgtServiceImpl.SERVICE_NAME,
+        immediate = true
 )
 @Designate(ocd = Saml2UserMgtServiceConfig.class, factory = true)
 public class Saml2UserMgtServiceImpl implements Saml2UserMgtService {
 
     private static final Logger LOG = LoggerFactory.getLogger(Saml2UserMgtServiceImpl.class);
 
-    public static final String SERVICE_NAME = "Saml2UserMgtService";
+    public static final String SERVICE_NAME = "org.apache.sling.auth.saml2.Saml2UserMgtService";
+    public static final String SUBSERVICE_NAME = "Saml2UserMgtService";
 
     public static final String USERS_ROOT = "/home/users/";
     public static final Pattern DOMAIN = Pattern.compile("\\{(?<concat>.)?domain(?<join>.)?}");
@@ -156,7 +159,7 @@ public class Saml2UserMgtServiceImpl implements Saml2UserMgtService {
         final String userId = samlUser.getId();
         if (StringUtils.isNotBlank(userId)) {
             try (final ResourceResolver resolver = resolverFactory.getServiceResourceResolver(
-                    Collections.singletonMap(ResourceResolverFactory.SUBSERVICE, SERVICE_NAME))) {
+                    Collections.singletonMap(ResourceResolverFactory.SUBSERVICE, SUBSERVICE_NAME))) {
                 final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
                 if (session != null) {
                     user = getOrCreateSamlUser(session, samlUser);
@@ -170,7 +173,7 @@ public class Saml2UserMgtServiceImpl implements Saml2UserMgtService {
                     LOG.error("Could not sync user '{}'. JackrabbitSession was null.", userId);
                 }
             } catch (final LoginException lex) {
-                LOG.error("Could not get SAML2 User Service. Check mapping org.apache.sling.auth.saml2:{}=...", SERVICE_NAME);
+                LOG.error("Could not get SAML2 Service User. Check mapping org.apache.sling.auth.saml2:{}=...", SUBSERVICE_NAME);
             } catch (final RepositoryException ex) {
                 LOG.error(ex.getMessage(), ex);
             }
