@@ -43,8 +43,8 @@
                         </Export-Package>
                         <Import-Package>
                             !org.keycloak,!org.keycloak.adapters,!org.keycloak.representations,
-                            com.composum.sling.core.*;version="[2,4)",
-                            com.composum.sling.nodes.*;version="[2,4)",
+                            com.composum.sling.core.*;version="[2,5)",
+                            com.composum.sling.nodes.*;version="[2,5)",
                             org.apache.felix.shell;resolution:=optional,
                             javax.annotation.*;version="[0,4)",
                             com.sun.security.jgss;resolution:=optional,
