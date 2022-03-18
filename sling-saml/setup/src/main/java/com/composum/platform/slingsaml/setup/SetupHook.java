@@ -21,7 +21,6 @@ public class SetupHook implements InstallHook {
 
     private static final String CONFIG_ACL = "/conf/composum/platform/slingsaml/acl";
     private static final String SLINGSAML_ACLS = CONFIG_ACL + "/service.json";
-    private static final String EXTERNAL_ACLS = CONFIG_ACL + "/external.json";
 
     public static final String PLATFORM_SYSTEM_USERS_PATH = "system/composum/platform/";
 
@@ -39,7 +38,7 @@ public class SetupHook implements InstallHook {
         PLATFORM_SYSTEM_USERS.put(PLATFORM_SYSTEM_USERS_PATH + PLATFORM_SLINGSAML_USER, Collections.emptyList());
         PLATFORM_GROUPS = new LinkedHashMap<>();
         PLATFORM_GROUPS.put(PLATFORM_GROUPS_PATH + "composum-platform-external", Collections.emptyList());
-        PLATFORM_GROUPS.put(PLATFORM_GROUPS_PATH + "composum-platform-user",
+        PLATFORM_GROUPS.put(PLATFORM_GROUPS_PATH + "composum-platform-users",
                 Collections.singletonList("composum-platform-external"));
     }
 
@@ -64,7 +63,6 @@ public class SetupHook implements InstallHook {
         try {
             Session session = ctx.getSession();
             setupService.addJsonAcl(session, SLINGSAML_ACLS, null);
-            setupService.addJsonAcl(session, EXTERNAL_ACLS, null);
             session.save();
         } catch (Exception rex) {
             LOG.error(rex.getMessage(), rex);

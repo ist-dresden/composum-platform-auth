@@ -3,6 +3,7 @@
   "service.ranking:Integer": 300,
   "entityID": "http://localhost:9080/",
   "acsPath": "/auth/saml",
+  "postLogoutRedirect": "/cpm/home.html",
   "saml2SessionAttr": "saml2AuthInfo",
   "saml2IDPDestination": "http://localhost:7070/realms/local/protocol/saml",
   "saml2LogoutURL": "http://localhost:7070/realms/local/protocol/saml",

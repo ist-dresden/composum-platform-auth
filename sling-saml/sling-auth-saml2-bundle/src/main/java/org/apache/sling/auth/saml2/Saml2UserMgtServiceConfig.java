@@ -37,11 +37,11 @@ public @interface Saml2UserMgtServiceConfig {
             description = "Home path for SAML2 Users, optional with a domain placeholder like '/home/users/external{domain}'")
     String saml2userHome() default "/home/users/saml";
 
-    @AttributeDefinition(name = "groupMembership Attribute Name",
+    @AttributeDefinition(name = "Group Membership Attribute Name",
             description = "Name of the attribute holding the users group memberships")
     String saml2groupMembershipAttr() default "";
 
-    @AttributeDefinition(name = "Synchronized Groups",
+    @AttributeDefinition(name = "Synchronize Group Memberships",
             description = "Map of group names / identifiers mapped from external identity provider. For example 'external=sling-external' maps IDP group 'external' to Sling group 'sling-external'")
     String[] syncGroups() default {};
 

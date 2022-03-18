@@ -94,8 +94,10 @@
                         <filter>
                             <root>/libs/composum/platform/config.local</root>
                             <includes>
+                                <include>.*/.*\.composum\..*\.core\.CoreConfigImpl\.config</include>
                                 <include>.*/.*\.saml2\.AuthenticationHandlerSAML2~keycloak\.cfg\.json</include>
                                 <include>.*/.*\.saml2\.Saml2UserMgtService~keycloak\.cfg\.json</include>
+                                <include>.*/.*\.sling\..*\.auth\.SlingAuthenticator\.config</include>
                             </includes>
                         </filter>
                         <filter>
