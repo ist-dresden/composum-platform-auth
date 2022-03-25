@@ -29,6 +29,10 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 @ObjectClassDefinition(name = "SAML2 User Mapping Configuration")
 public @interface Saml2UserMgtServiceConfig {
 
+    @AttributeDefinition(name = "Default Group Memberships",
+            description = "Map of group names / identifiers which has to be added to each imported external user.")
+    String[] defaultGroups() default {};
+
     @AttributeDefinition(name = "User ID (uid) Attribute Name",
             description = "Name of the attribute holding the users unique id")
     String saml2userIDAttr() default "username";

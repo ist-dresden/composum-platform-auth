@@ -165,6 +165,7 @@ public class Saml2UserMgtServiceImpl implements Saml2UserMgtService {
                     user = getOrCreateSamlUser(session, samlUser);
                     if (user != null) {
                         updateGroupMembership(session, samlUser, user);
+                        updateGroupMembership(session, config.defaultGroups(), user);
                         updateUserProperties(session, samlUser, user);
                     } else {
                         LOG.error("Could not sync user '{}'; user was null.", userId);
@@ -264,6 +265,25 @@ public class Saml2UserMgtServiceImpl implements Saml2UserMgtService {
             }
         }
         session.save();
+    }
+
+    protected void updateGroupMembership(@Nonnull final JackrabbitSession session,
+                                         @Nullable final String[] groupIds, @Nonnull final User user)
+            throws RepositoryException {
+        if (groupIds != null && groupIds.length > 0) {
+            final UserManager userManager = session.getUserManager();
+            // iterate all mapped groups
+            for (final String groupId : groupIds) {
+                Authorizable authorizable = userManager.getAuthorizable(groupId);
+                if (authorizable != null && authorizable.isGroup()) {
+                    Group group = (Group) authorizable;
+                    if (!group.isMember(user)) {
+                        group.addMember(user);
+                    }
+                }
+            }
+            session.save();
+        }
     }
 
     protected void updateUserProperties(@Nonnull final JackrabbitSession session,

@@ -2,7 +2,7 @@
     --cpm--default-text-color: #666;
     --cpm--default-dark--200: #777973; /* #737679 */
     --cpm--default-color--100: #9c7; /* #73c5c5 */
-    --cpm--default-color--200: #5a4; /* #009596 */
+    --cpm--default-color--200: #399a25; /* #009596 */
     --cpm--default-color--300: #1e3700; /* #003737 */
     --cpm--primary-color--100: #493; /* #06c */
     --cpm--primary-color--200: #382; /* #004080 */
@@ -61,7 +61,7 @@
 }
 
 .composum .login-pf-page .card-pf {
-    background: rgba(200, 230, 190, 0.8);
+    background: rgba(160, 200, 140, 0.6);
 }
 
 .composum #kc-info-wrapper {
@@ -81,6 +81,10 @@
 .composum .pf-c-form-control {
     background-color: var(--cpm--active-color--200) !important;
     outline: var(--cpm--primary-color--200);
+}
+
+.composum .pf-c-button.pf-m-control {
+    border-color: rgba(160, 200, 140, 0.5);
 }
 
 @media (max-width: 767px) {
