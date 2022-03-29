@@ -3,7 +3,7 @@
 - Sling Instance: http://localhost:9080/ (Sling '12' snapshot)
 - Keycloak Docker: http://localhost:7070/ (Keycloak 17.0)
 - see also
-  - https://github.com/apache/sling-org-apache-sling-auth-saml2
+    - https://github.com/apache/sling-org-apache-sling-auth-saml2
 
 # local test setup
 
@@ -14,12 +14,14 @@ OSGi configuration: config.local (/libs/composum/platform/config.local)
 ### Authentication Handler
 
 org.apache.sling.auth.saml2.AuthenticationHandlerSAML2~keycloak.cfg.json
+
 ```json
 {
   "path": "/",
   "service.ranking:Integer": 300,
   "entityID": "http://localhost:9080/",
   "acsPath": "/auth/saml",
+  "postLogoutRedirect": "/cpm/home.html",
   "saml2SessionAttr": "saml2AuthInfo",
   "saml2IDPDestination": "http://localhost:7070/realms/local/protocol/saml",
   "saml2LogoutURL": "http://localhost:7070/realms/local/protocol/saml",
@@ -36,8 +38,10 @@ org.apache.sling.auth.saml2.AuthenticationHandlerSAML2~keycloak.cfg.json
 ### User Mapping Service
 
 org.apache.sling.auth.saml2.Saml2UserMgtService~keycloak.cfg.json
+
 ```json
 {
+  "defaultGroups": [],
   "saml2userIDAttr": "urn:oid:1.2.840.113549.1.9.1",
   "saml2userHome": "/home/users/external{/domain/}",
   "saml2groupMembershipAttr": "group",
@@ -60,21 +64,25 @@ org.apache.sling.auth.saml2.Saml2UserMgtService~keycloak.cfg.json
 #### SetupHook
 
 system users
+
 - system/composum/platform/composum-platform-slingsaml
 
 groups
+
 - composum/platform/composum-platform-external
 - composum/platform/composum-platform-user
-  - members:
-    - composum-platform-external
+    - members:
+        - composum-platform-external
 
 setup scripts
+
 - /conf/composum/platform/slingsaml/acl/service.json
 - /conf/composum/platform/slingsaml/acl/external.json
 
 #### config (/libs/composum/platform/config)
 
 org.apache.sling.serviceusermapping.impl.ServiceUserMapperImpl.amended-slingsaml.cfg.json
+
 ```json
 {
   "service.ranking:Integer": 1000,
@@ -83,9 +91,11 @@ org.apache.sling.serviceusermapping.impl.ServiceUserMapperImpl.amended-slingsaml
   ]
 }
 ```
+
 #### /conf/composum/platform/slingsaml/acl
 
 service.json
+
 ```json
 [
   {
@@ -117,6 +127,7 @@ service.json
 ```
 
 external.json
+
 ```json
 [
   {
@@ -159,9 +170,8 @@ external.json
 
 ### Users
 
-Create users as you want for testing and assign a group 'composum-platform-external' to the users
-to ensure that these users have access to the Sling repository content. This group is mapped during
-user synchronisation.
+Create users as you want for testing and assign a group 'composum-platform-external' to the users to ensure that these
+users have access to the Sling repository content. This group is mapped during user synchronisation.
 
 ### Client 'local'
 
@@ -184,36 +194,32 @@ exported configuration excerpt
   "protocol": "saml",
   "attributes": {
     "saml_single_logout_service_url_redirect": "http://localhost:9080/auth/saml/loggedout",
-    "saml.authnstatement": "false",
+    "saml.authnstatement": "true",
     "display.on.consent.screen": "false",
     "saml_name_id_format": "email"
   },
   "fullScopeAllowed": true,
   "defaultClientScopes": [
-    "email-saml",
-    "groups",
-    "properties"
+    "sling"
   ],
   "optionalClientScopes": []
 }
 ```
 
-download: [exported client configuration](./src/test/config/keycloak/client/local/http___localhost_9080_.json)
+download: [exported realm configuration](./src/test/config/keycloak/realm/local.json) (excerpt but usable for import)
 
 ### Client Scopes
 
 ('Assigned Defaul Client Scopes' in the client configuration)
 
-- email-saml
-- groups
-- properties
+- sling
 
 <details>
   <summary>Click to expand!</summary>
 
-#### email-saml
+#### sling
 
-- Name: 'email-saml'
+- Name: 'sling'
 - Protocol: saml
 - consent: off
 
@@ -226,32 +232,6 @@ mappers
     - Property: 'email'
     - Friendly Name: 'email'
     - SAML Attribute Name: 'urn:oid:1.2.840.113549.1.9.1'
-
-#### groups
-
-- Name: 'groups'
-- Protocol: saml
-- consent: 'off'
-
-mappers
-
-- groups / Group Mapper / Group List
-    - Protocol: saml
-    - Name: 'groups'
-    - Mapper Type: Group list
-    - Property: 'group'
-    - Friendly Name: 'Group Member'
-    - Single Group Attribute: off
-    - Full group path: off
-
-#### properties
-
-- Name: 'properties'
-- Protocol: saml
-- consent: 'off'
-
-mappers
-
 - X500 givenName / AttributeStatement Mapper / User Property
     - Protocol: saml
     - Name: 'X500 givenName'
@@ -266,5 +246,13 @@ mappers
     - Property: 'lastName'
     - Friendly Name: 'surname'
     - SAML Attribute Name: 'urn:oid:2.5.4.4'
+- groups / Group Mapper / Group List
+    - Protocol: saml
+    - Name: 'groups'
+    - Mapper Type: Group list
+    - Property: 'group'
+    - Friendly Name: 'Group Member'
+    - Single Group Attribute: off
+    - Full group path: off
 
 </details>
