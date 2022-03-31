@@ -8,7 +8,7 @@
         <version>1.2.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>composum-platform-sling-saml</artifactId>
+    <artifactId>composum-platform-auth-saml</artifactId>
     <packaging>pom</packaging>
 
     <name>Composum Platform Auth Sling</name>
@@ -16,6 +16,7 @@
 
     <modules>
         <module>sling-auth-saml2-bundle</module>
+        <module>bundle</module>
         <module>setup</module>
         <module>package</module>
     </modules>

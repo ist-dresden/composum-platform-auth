@@ -5,11 +5,11 @@
 
     <parent>
         <groupId>com.composum.platform</groupId>
-        <artifactId>composum-platform-sling-saml</artifactId>
+        <artifactId>composum-platform-auth-saml</artifactId>
         <version>1.2.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>composum-platform-sling-saml-package</artifactId>
+    <artifactId>composum-platform-auth-saml-package</artifactId>
     <packaging>content-package</packaging>
 
     <name>Composum Platform Sling SAML Package</name>
@@ -61,7 +61,7 @@
                             <artifactItems>
                                 <artifactItem>
                                     <groupId>${project.groupId}</groupId>
-                                    <artifactId>composum-platform-sling-saml-setup</artifactId>
+                                    <artifactId>composum-platform-auth-saml-setup</artifactId>
                                     <outputDirectory>${project.build.directory}/vault-work/META-INF/vault/hooks</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
@@ -103,14 +103,20 @@
                         <filter>
                             <root>/libs/composum/platform/install</root>
                             <includes>
-                                <include>.*/org\.apache\.sling\.auth\.saml2.*\.jar</include>
-                                <include>.*/opensaml-bundle.*\.jar</include>
-                                <include>.*/oak-auth-external.*\.jar</include>
+                                <include>.*/composum-platform-auth-saml-bundle-.*\.jar</include>
+                                <include>.*/org\.apache\.sling\.auth\.saml2-.*\.jar</include>
+                                <include>.*/opensaml-bundle-.*\.jar</include>
+                                <include>.*/oak-auth-external-.*\.jar</include>
                             </includes>
                         </filter>
                     </filters>
 
                     <embeddeds>
+                        <embedded>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>composum-platform-auth-saml-bundle</artifactId>
+                            <target>/libs/composum/platform/install</target>
+                        </embedded>
                         <embedded>
                             <groupId>org.apache.sling</groupId>
                             <artifactId>org.apache.sling.auth.saml2</artifactId>
@@ -132,7 +138,13 @@
 
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>composum-platform-sling-saml-setup</artifactId>
+            <artifactId>composum-platform-auth-saml-setup</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>composum-platform-auth-saml-bundle</artifactId>
             <version>${project.version}</version>
         </dependency>
 
