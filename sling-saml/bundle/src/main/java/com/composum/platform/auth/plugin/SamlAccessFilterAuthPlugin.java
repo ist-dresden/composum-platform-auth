@@ -1,6 +1,7 @@
 package com.composum.platform.auth.plugin;
 
 import com.composum.platform.auth.session.SessionIdTransferService;
+import com.composum.sling.core.util.ValueEmbeddingWriter;
 import com.composum.sling.platform.security.PlatformAccessFilterAuthPlugin;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -24,6 +25,9 @@ import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
+import java.io.StringWriter;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.composum.platform.auth.session.SessionIdTransferService.PARAM_TOKEN;
 
@@ -76,6 +80,18 @@ public final class SamlAccessFilterAuthPlugin implements PlatformAccessFilterAut
                 description = "the URI to perform the session transfer to the designated host/domain"
         )
         String transferUri() default "/bin/public/auth/session/transfer";
+
+        @AttributeDefinition(
+                name = "Local SAML Endpoint",
+                description = "the optional URI of the local SAML authentication callback; if present a 'breaking through' request is blocked by the access filter"
+        )
+        String samlCallbackUri() default "/bin/public/auth/saml";
+
+        @AttributeDefinition(
+                name = "Blocked Redirect",
+                description = "the optional target URL to redirect a blocked request; default: ${scheme}://${host}:${port}${context}"
+        )
+        String redirectBlocked() default "${scheme}://${host}:${port}${context}";
     }
 
     @Reference
@@ -98,8 +114,10 @@ public final class SamlAccessFilterAuthPlugin implements PlatformAccessFilterAut
     public boolean triggerAuthentication(SlingHttpServletRequest request, SlingHttpServletResponse response,
                                          FilterChain chain)
             throws IOException {
-        if (config.enabled() && sessionIdTransferService.usePrimaryAuthenticationHost(request)) {
+        if (config.enabled() && !sessionIdTransferService.isPrimaryAuthHost(request)) {
+            final HttpSession session = request.getSession(true);
             final String token = sessionIdTransferService.initiateSessionTransfer(request, null);
+            session.setAttribute(SA_TOKEN, token);
             final String redirUrl = sessionIdTransferService.getAuthenticationUrl(request, token, config.prepareUri());
             redirect(request, response, redirUrl, "trigger");
             return true;
@@ -112,22 +130,47 @@ public final class SamlAccessFilterAuthPlugin implements PlatformAccessFilterAut
                                   FilterChain chain)
             throws IOException {
         if (config.enabled()) {
+            final String host = request.getServerName();
             final String path = request.getResource().getPath();
             if (config.prepareUri().equals(path)) {
-                LOG.info("prepare: redirect for authentication...");
+                LOG.debug("[{}].prepare: redirect for authentication...", host);
                 prepareAuthentication(request, response);
                 return true;
             } else if (config.triggerUri().equals(path)) {
-                LOG.info("trigger: redirect to requested host...");
+                LOG.debug("[{}].trigger: redirect to requested host...", host);
                 redirectSession(request, response);
                 return true;
             } else if (config.transferUri().equals(path)) {
-                LOG.info("transfer: build host related session...");
+                LOG.debug("[{}].transfer: build host related session...", host);
                 transferSession(request, response);
+                return true;
+            } else if (config.samlCallbackUri().equals(path)) {
+                LOG.debug("[{}].block: breaking through SAML request", host);
+                blockRequest(request, response);
                 return true;
             }
         }
         return false;
+    }
+
+    @Nullable
+    private String retrieveToken(@NotNull final SlingHttpServletRequest request,
+                                 @Nullable final SlingHttpServletResponse response,
+                                 @NotNull final String step)
+            throws IOException {
+        String token = request.getParameter(PARAM_TOKEN);
+        if (StringUtils.isBlank(token)) {
+            final HttpSession session = request.getSession(false);
+            if (session != null) {
+                token = (String) session.getAttribute(SA_TOKEN);
+            }
+        }
+        if (StringUtils.isBlank(token) && response != null) {
+            final String host = request.getServerName();
+            LOG.error("[{}].{}: Token missing.", host, step);
+            blockRequest(request, response);
+        }
+        return token;
     }
 
     /**
@@ -143,9 +186,10 @@ public final class SamlAccessFilterAuthPlugin implements PlatformAccessFilterAut
             final String redirUrl = sessionIdTransferService.getAuthenticationUrl(request, token, config.triggerUri());
             redirect(request, response, redirUrl, "prepare");
         } else {
+            final String host = request.getServerName();
             session.removeAttribute(SA_TOKEN);
-            LOG.error("prepare: Token missing.");
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "prepare: Token missing.");
+            LOG.error("[{}].prepare: Token missing.", host);
+            blockRequest(request, response);
         }
     }
 
@@ -176,37 +220,68 @@ public final class SamlAccessFilterAuthPlugin implements PlatformAccessFilterAut
         }
     }
 
-    @Nullable
-    private String retrieveToken(@NotNull final SlingHttpServletRequest request,
-                                 @Nullable final SlingHttpServletResponse response,
-                                 @NotNull final String step)
+    /**
+     * executed on aborting the session transfer or on blocking an unexpected SAML callback
+     */
+    private void blockRequest(@NotNull final SlingHttpServletRequest request,
+                              @NotNull final SlingHttpServletResponse response)
             throws IOException {
-        String token = request.getParameter(PARAM_TOKEN);
-        if (StringUtils.isBlank(token)) {
-            final HttpSession session = request.getSession(false);
-            if (session != null) {
-                token = (String) session.getAttribute(SA_TOKEN);
+        String redirectUrl = null;
+        final String token = retrieveToken(request, null, "block");
+        if (StringUtils.isNotBlank(token)) {
+            redirectUrl = sessionIdTransferService.getFinalUrl(token, true);
+        }
+        if (StringUtils.isBlank(redirectUrl)) {
+            redirectUrl = config.redirectBlocked();
+            if (StringUtils.isNotBlank(redirectUrl)) {
+                redirectUrl = redirectUrl(request, redirectUrl);
             }
         }
-        if (StringUtils.isBlank(token) && response != null) {
-            LOG.error(step + ": Token missing.");
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, step + ": Token missing.");
+        if (StringUtils.isNotBlank(redirectUrl)) {
+            response.sendRedirect(redirectUrl);
+        } else {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
         }
-        return token;
     }
 
     private void redirect(@NotNull final SlingHttpServletRequest request,
                           @NotNull final SlingHttpServletResponse response,
-                          @Nullable final String redirUrl, @NotNull final String step)
+                          @Nullable final String redirectUrl, @NotNull final String step)
             throws IOException {
-        if (StringUtils.isNotBlank(redirUrl)) {
+        final String host = request.getServerName();
+        if (StringUtils.isNotBlank(redirectUrl)) {
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Redirecting to {}", redirUrl.replaceFirst("\\?.*", ""));
+                LOG.debug("[{}].redirecting to {}", host, redirectUrl.replaceFirst("\\?.*", ""));
             }
-            response.sendRedirect(redirUrl);
+            response.sendRedirect(redirectUrl);
         } else {
-            LOG.error(step + ": session transfer not passible ({})", request.getRequestURL());
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, step + ": Session transfer failed");
+            LOG.error("[{}].{}: session transfer not possible ({})", host, step, request.getRequestURL());
+            blockRequest(request, response);
         }
+    }
+
+    @NotNull
+    private String redirectUrl(@NotNull final SlingHttpServletRequest request, @NotNull String redirectUrl) {
+        Map<String, Object> values = new HashMap<>();
+        values.put("scheme", request.getScheme());
+        values.put("host", request.getServerName());
+        values.put("port", request.getServerPort());
+        values.put("context", request.getContextPath());
+        values.put("uri", request.getRequestURI());
+        values.put("path", request.getResource().getPath());
+        values.put("query", request.getQueryString());
+        return redirectUrl(redirectUrl, values);
+    }
+
+    @NotNull
+    private String redirectUrl(@NotNull String redirectUrl, @NotNull final Map<String, Object> values) {
+        try (StringWriter urlWriter = new StringWriter();
+             ValueEmbeddingWriter embeddingWriter = new ValueEmbeddingWriter(urlWriter, values)) {
+            embeddingWriter.append(redirectUrl);
+            redirectUrl = urlWriter.toString();
+        } catch (IOException ex) {
+            LOG.error(ex.getMessage(), ex);
+        }
+        return redirectUrl;
     }
 }

@@ -14,6 +14,7 @@ public interface SessionIdTransferService {
     String PARAM_TOKEN = "token";
 
     String PL_FINAL_URL = "finalUrl";
+    String PL_FORM_AUTH = "formAuth";
     String PL_SESSION_ID = "sessionId";
     String PL_TARGET_HOST = "targetHost";
     String PL_CEATION_TIME = "ceationTime";
@@ -28,7 +29,7 @@ public interface SessionIdTransferService {
      * {@link SessionIdTransferConfigurationService.SessionIdTransferConfiguration#authenticationHostUrl()} ,
      * otherwise false.
      */
-    boolean usePrimaryAuthenticationHost(@NotNull HttpServletRequest request);
+    boolean isPrimaryAuthHost(@NotNull HttpServletRequest request);
 
     /**
      * Initializes the transfer processing - creates a token for data synchronization between sessions.
@@ -40,16 +41,34 @@ public interface SessionIdTransferService {
     String initiateSessionTransfer(@NotNull HttpServletRequest request, @Nullable String finalUrl);
 
     /**
-     * Provides the data of the authenticated session on th authentication host for transfer to the final host.
+     * Provides the data of the authenticated session on the authentication host for transfer to the final host.
      *
      * @param request the current request on the authentocation host
      * @param token   the token to use for transfer
      */
     void prepreSessionTransfer(@NotNull HttpServletRequest request, @Nullable String token);
 
+    /**
+     * Copies the authenticated session to the final host
+     *
+     * @param request  the current request on the authentocation host
+     * @param token    the token to use for transfer
+     * @param response the current response for cookie management
+     * @return the final URL; the final redirect target
+     */
     @Nullable
     String performSessionTransfer(@NotNull HttpServletRequest request, @Nullable String token,
-                                   @NotNull HttpServletResponse response);
+                                  @NotNull HttpServletResponse response);
+
+    /**
+     * Returns the final URL assigend to the given token
+     *
+     * @param token the session transfer token
+     * @param close if 'true' the associated transfer is aborted
+     * @return the final URL if such an URL can be retrieved, otherwise 'null'
+     */
+    @Nullable
+    String getFinalUrl(@Nullable String token, boolean close);
 
     /**
      * Returns a URL to the primary authentication host.
