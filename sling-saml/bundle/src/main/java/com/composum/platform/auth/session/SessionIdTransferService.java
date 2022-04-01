@@ -21,12 +21,12 @@ public interface SessionIdTransferService {
 
     /**
      * Checks whether we are at the primary authentication host, as configured in
-     * {@link SessionIdTransferConfigurationService.SessionIdTransferConfiguration#authenticationHostUrl()}, or
-     * should redirect there via {@link #getAuthenticationUrl(String, HttpServletRequest)} for authentication.
+     * {@link SessionIdTransferService.Config#authenticationHostUrl()}, or
+     * should redirect there via {@link #getAuthenticationUrl()} for authentication.
      *
-     * @return true if the session transfer is
-     * {@link SessionIdTransferConfigurationService.SessionIdTransferConfiguration#enabled()} and we are not at the
-     * {@link SessionIdTransferConfigurationService.SessionIdTransferConfiguration#authenticationHostUrl()} ,
+     * @return true if the requests host is the
+     * {@link SessionIdTransferService.Config#authenticationHostUrl()} and
+     * {@link SessionIdTransferService.Config#enabled()},
      * otherwise false.
      */
     boolean isPrimaryAuthHost(@NotNull HttpServletRequest request);

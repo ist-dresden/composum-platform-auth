@@ -35,6 +35,8 @@ import static com.composum.platform.auth.session.SessionIdTransferService.PARAM_
  * The PlatformAccessFilterAuthPlugin implementation to support the authentication on a virtual host
  * via the systems primary host. If an authentication is triggered on a virtual host a token is created and stored
  * in the session on the vhost. The token id is sent to the primary host and stored in its coresponding session too.
+ * After authentication on the primary host the session is transfered (copied) to the virtual host an the request
+ * is redirected to the designated final URL on the virtual host.
  */
 @Component(
         service = {PlatformAccessFilterAuthPlugin.class},
@@ -118,8 +120,8 @@ public final class SamlAccessFilterAuthPlugin implements PlatformAccessFilterAut
             final HttpSession session = request.getSession(true);
             final String token = sessionIdTransferService.initiateSessionTransfer(request, null);
             session.setAttribute(SA_TOKEN, token);
-            final String redirUrl = sessionIdTransferService.getAuthenticationUrl(request, token, config.prepareUri());
-            redirect(request, response, redirUrl, "trigger");
+            final String redirectUrl = sessionIdTransferService.getAuthenticationUrl(request, token, config.prepareUri());
+            redirect(request, response, redirectUrl, "trigger");
             return true;
         }
         return false;
@@ -183,8 +185,8 @@ public final class SamlAccessFilterAuthPlugin implements PlatformAccessFilterAut
         final HttpSession session = request.getSession(true);
         if (StringUtils.isNotBlank(token)) {
             session.setAttribute(SA_TOKEN, token);
-            final String redirUrl = sessionIdTransferService.getAuthenticationUrl(request, token, config.triggerUri());
-            redirect(request, response, redirUrl, "prepare");
+            final String redirectUrl = sessionIdTransferService.getAuthenticationUrl(request, token, config.triggerUri());
+            redirect(request, response, redirectUrl, "prepare");
         } else {
             final String host = request.getServerName();
             session.removeAttribute(SA_TOKEN);
@@ -202,8 +204,8 @@ public final class SamlAccessFilterAuthPlugin implements PlatformAccessFilterAut
         final String token = retrieveToken(request, response, "redirect");
         if (StringUtils.isNotBlank(token)) {
             sessionIdTransferService.prepreSessionTransfer(request, token);
-            final String redirUrl = sessionIdTransferService.getSessionHostUrl(request, token, config.transferUri());
-            redirect(request, response, redirUrl, "redirect");
+            final String redirectUrl = sessionIdTransferService.getSessionHostUrl(request, token, config.transferUri());
+            redirect(request, response, redirectUrl, "redirect");
         }
     }
 
