@@ -67,21 +67,21 @@ public final class SamlAccessFilterAuthPlugin implements PlatformAccessFilterAut
 
         @AttributeDefinition(
                 name = "Prepare URI",
-                description = "the URI to prepare session transfer (URI to primary host for session sync)"
+                description = "the synthetic URI to prepare session transfer (URI to primary host for session sync)"
         )
-        String prepareUri() default "/bin/public/auth/session/prepare";
+        String prepareUri() default "/bin/public/auth/session/prepare.html";
 
         @AttributeDefinition(
                 name = "Login URI",
-                description = "the URI to trigger the authentication (secured URI on primary host)"
+                description = "the synthetic URI to trigger the authentication (secured URI on primary host)"
         )
-        String triggerUri() default "/bin/private/auth/session";
+        String triggerUri() default "/bin/private/auth/session.html";
 
         @AttributeDefinition(
                 name = "Transfer URI",
-                description = "the URI to perform the session transfer to the designated host/domain"
+                description = "the synthetic URI to perform the session transfer to the designated host/domain"
         )
-        String transferUri() default "/bin/public/auth/session/transfer";
+        String transferUri() default "/bin/public/auth/session/transfer.html";
 
         @AttributeDefinition(
                 name = "Local SAML Endpoint",

@@ -261,19 +261,21 @@ public class SessionIdTransferServiceImpl implements SessionIdTransferService {
     public String getSessionHostUrl(@NotNull final HttpServletRequest request, @Nullable final String token,
                                     @NotNull final String uri) {
         if (enabled) {
-            final Map<String, Serializable> payload;
-            final String finalUrl;
+            Map<String, Serializable> payload = null;
+            String finalUrl = null;
             if (StringUtils.isNotBlank(token) && (payload = getPayload(token, false)) != null
-                    && (finalUrl = (String) payload.get(PL_FINAL_URL)) != null) {
+                    && StringUtils.isNotBlank(finalUrl = (String) payload.get(PL_FINAL_URL))) {
                 try {
                     final URI targetUri = new URI(finalUrl);
                     URI redirURI = new URI(
                             targetUri.getScheme(), null, targetUri.getHost(), targetUri.getPort(),
                             uri, PARAM_TOKEN + "=" + token, null);
                     return redirURI.toASCIIString();
-                } catch (URISyntaxException e) {
-                    e.printStackTrace();
+                } catch (URISyntaxException ex) {
+                    LOG.error(ex.getMessage(), ex);
                 }
+            } else {
+                LOG.debug("cannot build host url ({},{})", payload, finalUrl);
             }
         }
         return null;
