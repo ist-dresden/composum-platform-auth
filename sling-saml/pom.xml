@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.composum.platform</groupId>
         <artifactId>composum-platform-auth</artifactId>
-        <version>1.2.0-SNAPSHOT</version>
+        <version>1.2.0</version>
     </parent>
 
     <artifactId>composum-platform-auth-saml</artifactId>
@@ -15,7 +15,7 @@
     <description>Maven parent for Composum Platform Auth Sling adoption</description>
 
     <modules>
-        <module>sling-auth-saml2-bundle</module>
+        <module>sling-saml</module>
         <module>bundle</module>
         <module>setup</module>
         <module>package</module>
@@ -23,13 +23,6 @@
 
     <dependencyManagement>
         <dependencies>
-
-            <dependency>
-                <groupId>org.apache.sling</groupId>
-                <artifactId>org.apache.sling.auth.saml2</artifactId>
-                <version>0.2.7-SNAPSHOT</version>
-                <scope>provided</scope>
-            </dependency>
 
             <dependency>
                 <groupId>org.opensaml</groupId>

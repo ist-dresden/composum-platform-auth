@@ -20,9 +20,10 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>org.apache.sling.auth.saml2</artifactId>
+    <groupId>com.composum.platform</groupId>
+    <artifactId>composum-platform-auth-sling-saml</artifactId>
     <name>SAML2 Service Provider</name>
-    <version>0.2.7-SNAPSHOT</version>
+    <version>1.2.0</version>
     <description>A SAML2 Web-profile SSO Service Provider (Sling Authentication) that uses encrypted
         POST Binding for communicating security assertions from an identity provider such as Shibboleth.
     </description>
@@ -49,11 +50,21 @@
     </properties>
 
     <scm>
-        <connection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-auth-saml2.git</connection>
-        <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-auth-saml2.git</developerConnection>
-        <url>https://gitbox.apache.org/repos/asf?p=sling-org-apache-sling-auth-saml2.git</url>
-        <tag>HEAD</tag>
+        <connection>scm:git:https://github.com/ist-dresden/composum-platform.git</connection>
+        <developerConnection>scm:git:https://github.com/ist-dresden/composum-platform.git</developerConnection>
+        <url>https://github.com/ist-dresden/composum-platform.git</url>
     </scm>
+
+    <distributionManagement>
+        <repository>
+            <id>istrepo</id>
+            <url>https://repo.ist-software.com/repository/maven-releases</url>
+        </repository>
+        <snapshotRepository>
+            <id>istrepo</id>
+            <url>https://repo.ist-software.com/repository/maven-snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
 
     <build>
         <plugins>
