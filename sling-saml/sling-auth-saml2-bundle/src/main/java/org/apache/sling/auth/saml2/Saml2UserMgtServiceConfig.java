@@ -38,7 +38,7 @@ public @interface Saml2UserMgtServiceConfig {
     String saml2userIDAttr() default "username";
 
     @AttributeDefinition(name = "Path for SAML2 Users",
-            description = "Home path for SAML2 Users, optional with a domain placeholder like '/home/users/external{domain}'")
+            description = "Home path for SAML2 Users, optional with a domain placeholder, e.g. '/home/users/external{domain}'")
     String saml2userHome() default "/home/users/saml";
 
     @AttributeDefinition(name = "Group Membership Attribute Name",
