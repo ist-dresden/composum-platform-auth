@@ -104,7 +104,7 @@
                             <root>/libs/composum/platform/install</root>
                             <includes>
                                 <include>.*/composum-platform-auth-saml-bundle-.*\.jar</include>
-                                <include>.*/org\.apache\.sling\.auth\.saml2-.*\.jar</include>
+                                <include>.*/composum-platform-auth-sling-saml-.*\.jar</include>
                                 <include>.*/opensaml-bundle-.*\.jar</include>
                                 <include>.*/oak-auth-external-.*\.jar</include>
                             </includes>
