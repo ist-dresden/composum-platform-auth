@@ -48,9 +48,11 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 import java.security.Principal;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -74,6 +76,8 @@ public class Saml2UserMgtServiceImpl implements Saml2UserMgtService {
     public static final String USERS_ROOT = "/home/users/";
     public static final Pattern DOMAIN = Pattern.compile("\\{(?<concat>.)?domain(?<join>.)?}");
     public static final Pattern MAIL_ADDR = Pattern.compile("^[^@]+@(?<domain>[^@]+)$");
+
+    public static final String PN_LAST_LOGIN = "lastLogin";
 
     @Reference
     private ResourceResolverFactory resolverFactory;
@@ -167,6 +171,7 @@ public class Saml2UserMgtServiceImpl implements Saml2UserMgtService {
                         updateGroupMembership(session, samlUser, user);
                         updateGroupMembership(session, config.defaultGroups(), user);
                         updateUserProperties(session, samlUser, user);
+                        updateLastLogin(session, user);
                     } else {
                         LOG.error("Could not sync user '{}'; user was null.", userId);
                     }
@@ -205,13 +210,13 @@ public class Saml2UserMgtServiceImpl implements Saml2UserMgtService {
 
     /**
      * Builds a user intermediate path based on the configured user root with a path inserted which is derived
-     * from the users domain if such a domain can be extracted from the given parameter.
+     * from the users' domain if such a domain can be extracted from the given parameter.
      * The domain is inserted at each place marked for domain insertion in the configured user root. Such a
      * domain placeholder is a pattern like '{domain}' in the configured users root with optional characters
      * for domain path appending and domain dot replacement, e.g. '/home/users/external{/domain/}'.
      *
      * @param userIdOrMail the user id or the users mail address (should be like a mail address)
-     * @return the intermediat path or 'null' (no itermediate path)
+     * @return the intermediat path or 'null' (no intermediate path)
      */
     @Nullable
     protected String getIntermediatePath(@Nonnull final String userIdOrMail) {
@@ -294,6 +299,17 @@ public class Saml2UserMgtServiceImpl implements Saml2UserMgtService {
             user.setProperty(entry.getKey(), valueFactory.createValue(entry.getValue()));
         }
         session.save();
+    }
+
+    protected void updateLastLogin(@Nonnull final JackrabbitSession session, @Nonnull final User user)
+            throws RepositoryException {
+        try {
+            final Value now = session.getValueFactory().createValue(Calendar.getInstance());
+            user.setProperty(PN_LAST_LOGIN, now);
+            session.save();
+        } catch (RepositoryException ex) {
+            LOG.warn("Ignored error updating last login time for '" + user.getID() + "'", ex);
+        }
     }
 
     // helpers

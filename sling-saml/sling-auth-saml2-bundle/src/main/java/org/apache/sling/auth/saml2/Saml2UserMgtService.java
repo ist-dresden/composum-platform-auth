@@ -35,7 +35,7 @@ public interface Saml2UserMgtService {
     void applySaml2Attributes(@Nonnull Assertion assertion, @Nonnull Saml2User samlUser);
 
     /**
-     * Makes all user properties if the given SAML user persistent.
+     * Makes all user properties of the given SAML user persistent.
      *
      * @param samlUser the prepared SAML user with all information to synchronize
      * @return the JCR user of the given SAML user
