@@ -1,0 +1,44 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd ">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.composum.platform</groupId>
+        <artifactId>composum-platform-auth</artifactId>
+        <version>1.2.0</version>
+    </parent>
+
+    <artifactId>composum-platform-auth-saml</artifactId>
+    <packaging>pom</packaging>
+
+    <name>Composum Platform Auth Sling</name>
+    <description>Maven parent for Composum Platform Auth Sling adoption</description>
+
+    <modules>
+        <module>sling-saml</module>
+        <module>bundle</module>
+        <module>setup</module>
+        <module>package</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+
+            <dependency>
+                <groupId>org.opensaml</groupId>
+                <artifactId>opensaml-bundle</artifactId>
+                <version>4.0.1</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.jackrabbit</groupId>
+                <artifactId>oak-auth-external</artifactId>
+                <version>1.42.0</version>
+                <scope>provided</scope>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+</project>

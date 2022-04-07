@@ -2,6 +2,7 @@
 .crossref-*
 .local-*
 local-*
+sling-saml-excerpt/
 # IntelliJ
 .idea
 *.iml

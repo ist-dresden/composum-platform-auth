@@ -1,0 +1,14 @@
+{
+  "defaultGroups": [],
+  "saml2userIDAttr": "urn:oid:1.2.840.113549.1.9.1",
+  "saml2userHome": "/home/users/external{/domain/}",
+  "saml2groupMembershipAttr": "group",
+  "syncGroups": [
+    "composum-platform-external"
+  ],
+  "syncAttrs": [
+    "urn:oid:1.2.840.113549.1.9.1=./profile/email",
+    "urn:oid:2.5.4.42=./profile/givenName",
+    "urn:oid:2.5.4.4=./profile/familyName"
+  ]
+}

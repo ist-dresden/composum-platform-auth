@@ -5,26 +5,27 @@
 	<parent>
 		<groupId>com.composum.platform</groupId>
 		<artifactId>composum-platform</artifactId>
-		<version>1.2.1-SNAPSHOT</version>
+		<version>1.6.0</version>
 		<relativePath/>
 	</parent>
 
     <artifactId>composum-platform-auth</artifactId>
-	<version>1.0.0</version>
+	<version>1.2.0</version>
 	<packaging>pom</packaging>
 
     <name>Composum Platform Auth</name>
     <description>Maven parent for Composum Platform Auth services</description>
 
 	<properties>
-		<keycloak.version>4.8.3.Final</keycloak.version>
-		<composum.platform.version>1.2.0</composum.platform.version>
+		<composum.platform.version>1.6.0</composum.platform.version>
+		<release.repository.id>istrepo</release.repository.id>
+		<release.repository.url>https://repo.ist-software.com/repository/maven-releases</release.repository.url>
 	</properties>
 
 	<modules>
-		<module>bundle</module>
-		<module>setup</module>
-		<module>package</module>
+		<module>sling-saml</module>
+		<module>keycloak/themes</module>
+		<!--module>selfmade</module-->
 	</modules>
 
 	<scm>
