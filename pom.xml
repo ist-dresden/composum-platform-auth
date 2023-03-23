@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>com.composum.platform</groupId>
 		<artifactId>composum-platform</artifactId>
-		<version>1.6.0</version>
+		<version>1.7.0</version>
 		<relativePath/>
 	</parent>
 
@@ -17,7 +17,7 @@
     <description>Maven parent for Composum Platform Auth services</description>
 
 	<properties>
-		<composum.platform.version>1.6.0</composum.platform.version>
+		<composum.platform.version>1.7.0</composum.platform.version>
 		<release.repository.id>istrepo</release.repository.id>
 		<release.repository.url>https://repo.ist-software.com/repository/maven-releases</release.repository.url>
 	</properties>
