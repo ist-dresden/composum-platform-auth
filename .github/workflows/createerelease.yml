@@ -165,7 +165,7 @@ jobs:
       run: |
         cd target/checkout
         pwd
-        $MVNCMD nexus-staging:release
+        $MVNCMD org.sonatype.plugins:nexus-staging-maven-plugin:release
 
     - name: Drop from OSSRH on dryrun
       if: ${{ github.event.inputs.dryrun != 'false' }}
@@ -175,7 +175,7 @@ jobs:
       run: |
         cd target/checkout
         pwd
-        $MVNCMD nexus-staging:drop
+        $MVNCMD org.sonatype.plugins:nexus-staging-maven-plugin:drop
 
     - name: List target files even if recipe fails
       if: always()
