@@ -26,10 +26,11 @@
 		<!--module>selfmade</module-->
 	</modules>
 
+	<url>https://github.com/ist-dresden/composum-platform-auth</url>
 	<scm>
-		<connection>scm:git:https://bitbucket.org/ist-software/cpm-platform-auth.git</connection>
-		<developerConnection>scm:git:https://bitbucket.org/ist-software/cpm-platform-auth.git</developerConnection>
-		<url>https://bitbucket.org/ist-software/cpm-platform-auth.git</url>
+		<connection>scm:git:https://github.com/ist-dresden/composum-platform-auth.git</connection>
+		<developerConnection>scm:git:https://github.com/ist-dresden/composum-platform-auth.git</developerConnection>
+		<url>https://github.com/ist-dresden/composum-platform-auth.git</url>
 	</scm>
 
 	<dependencyManagement>
