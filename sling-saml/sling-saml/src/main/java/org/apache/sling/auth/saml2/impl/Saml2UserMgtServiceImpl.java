@@ -285,6 +285,8 @@ public class Saml2UserMgtServiceImpl implements Saml2UserMgtService {
                     if (!group.isMember(user)) {
                         group.addMember(user);
                     }
+                } else {
+                    LOG.warn("Group '{}' not found or not a group.", groupId);
                 }
             }
             session.save();
