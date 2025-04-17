@@ -22,7 +22,7 @@
     <groupId>com.composum.platform</groupId>
     <artifactId>composum-platform-auth-sling-saml</artifactId>
     <name>SAML2 Service Provider</name>
-    <version>1.2.3-SNAPSHOT</version>
+    <version>1.2.3</version>
     <description>A SAML2 Web-profile SSO Service Provider (Sling Authentication) that uses encrypted
         POST Binding for communicating security assertions from an identity provider such as Shibboleth.
     </description>
@@ -52,7 +52,7 @@
         <connection>scm:git:https://github.com/ist-dresden/composum-platform.git</connection>
         <developerConnection>scm:git:https://github.com/ist-dresden/composum-platform.git</developerConnection>
         <url>https://github.com/ist-dresden/composum-platform.git</url>
-      <tag>HEAD</tag>
+      <tag>composum-platform-auth-1.2.3</tag>
   </scm>
 
     <distributionManagement>
