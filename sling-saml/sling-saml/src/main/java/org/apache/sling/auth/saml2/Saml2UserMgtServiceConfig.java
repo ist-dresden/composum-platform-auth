@@ -24,7 +24,7 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 /**
  * The configuration for the <code>SAML2</code> user mapping
  *
- * @see Saml2UserMgtServiceImpl
+ * @see org.apache.sling.auth.saml2.impl.Saml2UserMgtServiceImpl
  */
 @ObjectClassDefinition(name = "SAML2 User Mapping Configuration")
 public @interface Saml2UserMgtServiceConfig {

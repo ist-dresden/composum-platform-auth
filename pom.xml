@@ -1,25 +1,22 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd ">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd ">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
 		<groupId>com.composum.platform</groupId>
 		<artifactId>composum-platform</artifactId>
-		<version>1.6.0</version>
-		<relativePath/>
+		<version>1.7.2</version>
+		<relativePath />
 	</parent>
 
     <artifactId>composum-platform-auth</artifactId>
-	<version>1.2.1</version>
+	<version>1.2.3</version>
 	<packaging>pom</packaging>
 
     <name>Composum Platform Auth</name>
     <description>Maven parent for Composum Platform Auth services</description>
 
 	<properties>
-		<composum.platform.version>1.6.0</composum.platform.version>
-		<release.repository.id>istrepo</release.repository.id>
-		<release.repository.url>https://repo.ist-software.com/repository/maven-releases</release.repository.url>
+		<composum.platform.version>1.7.2</composum.platform.version>
 	</properties>
 
 	<modules>
@@ -28,11 +25,13 @@
 		<!--module>selfmade</module-->
 	</modules>
 
+	<url>https://github.com/ist-dresden/composum-platform-auth</url>
 	<scm>
-		<connection>scm:git:https://bitbucket.org/ist-software/cpm-platform-auth.git</connection>
-		<developerConnection>scm:git:https://bitbucket.org/ist-software/cpm-platform-auth.git</developerConnection>
-		<url>https://bitbucket.org/ist-software/cpm-platform-auth.git</url>
-	</scm>
+		<connection>scm:git:https://github.com/ist-dresden/composum-platform-auth.git</connection>
+		<developerConnection>scm:git:https://github.com/ist-dresden/composum-platform-auth.git</developerConnection>
+		<url>https://github.com/ist-dresden/composum-platform-auth.git</url>
+	  <tag>composum-platform-auth-1.2.3</tag>
+  </scm>
 
 	<dependencyManagement>
 		<dependencies>

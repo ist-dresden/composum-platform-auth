@@ -258,7 +258,9 @@ public class Saml2UserMgtServiceImpl implements Saml2UserMgtService {
             Authorizable authorizable = userManager.getAuthorizable(groupId);
             if (authorizable != null && authorizable.isGroup()) {
                 Group group = (Group) authorizable;
-                if (samlUser.getGroupMembership().contains(groupId)) {
+                boolean hasGroup = samlUser.getGroupMembership().contains(groupId);
+                LOG.debug("group '{}' member {}", groupId, hasGroup);
+                if (hasGroup) {
                     if (!group.isMember(user)) {
                         group.addMember(user);
                     }
@@ -282,9 +284,12 @@ public class Saml2UserMgtServiceImpl implements Saml2UserMgtService {
                 Authorizable authorizable = userManager.getAuthorizable(groupId);
                 if (authorizable != null && authorizable.isGroup()) {
                     Group group = (Group) authorizable;
+                    LOG.debug("group '{}' member {}", groupId, group.isMember(user));
                     if (!group.isMember(user)) {
                         group.addMember(user);
                     }
+                } else {
+                    LOG.warn("Group '{}' not found or not a group.", groupId);
                 }
             }
             session.save();

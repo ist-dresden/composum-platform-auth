@@ -1,7 +1,11 @@
 # Keycloak Example
 
 - Sling Instance: http://localhost:9080/ (Sling '12' snapshot)
-- Keycloak Docker: http://localhost:7070/ (Keycloak 17.0)
+- Keycloak Docker: http://localhost:7070/ (Keycloak 17.0++)
+    - https://www.keycloak.org/getting-started/getting-started-docker
+      ```
+      docker run --name keycloak -p 7070:8080 -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=admin quay.io/keycloak/keycloak:latest start-dev
+      ```
 - see also
     - https://github.com/apache/sling-org-apache-sling-auth-saml2
 
