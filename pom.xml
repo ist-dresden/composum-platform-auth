@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>com.composum.platform</groupId>
 		<artifactId>composum-platform</artifactId>
-		<version>1.7.2-SNAPSHOT</version>
+		<version>1.7.2</version>
 		<relativePath />
 	</parent>
 
@@ -16,7 +16,7 @@
     <description>Maven parent for Composum Platform Auth services</description>
 
 	<properties>
-		<composum.platform.version>1.7.0</composum.platform.version>
+		<composum.platform.version>1.7.2</composum.platform.version>
 	</properties>
 
 	<modules>

@@ -21,7 +21,7 @@ jobs:
 
     env:
       SUBDIR: ${{ github.event.inputs.subdir }}
-      MVNCMD: mvn -B -ntp -s ${{ github.workspace }}/.github/settings-istrepo.xml -P nexus-staging
+      MVNCMD: mvn -B -ntp -s ${{ github.workspace }}/.github/settings.xml -P nexus-staging
 
     steps:
     - uses: actions/checkout@v3
@@ -165,7 +165,7 @@ jobs:
       run: |
         cd target/checkout
         pwd
-        $MVNCMD org.sonatype.plugins:nexus-staging-maven-plugin:release
+        $MVNCMD nexus-staging:release
 
     - name: Drop from OSSRH on dryrun
       if: ${{ github.event.inputs.dryrun != 'false' }}
@@ -175,7 +175,7 @@ jobs:
       run: |
         cd target/checkout
         pwd
-        $MVNCMD org.sonatype.plugins:nexus-staging-maven-plugin:drop
+        $MVNCMD nexus-staging:drop
 
     - name: List target files even if recipe fails
       if: always()
